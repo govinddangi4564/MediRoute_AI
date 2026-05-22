@@ -48,12 +48,31 @@ export default function LandingPage() {
             <Link href="/upload" className="ll-btn-secondary text-center">
               Upload Reports / Prescriptions
             </Link>
+          </div>
+
+          <div className="mt-5 rounded-3xl border border-[#ffd7ad] bg-[linear-gradient(180deg,#fff6ea_0%,#fffdf8_100%)] p-4 md:p-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#9a5a12]">
+              Voice First for Easy Use
+            </p>
+            <p className="mt-1 text-sm text-[#7e5b30]">
+              Can&apos;t type? Tap the big mic and speak your symptoms.
+            </p>
+
             <Link
               href="/symptoms?voice=1"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#ffcf9d] bg-[#fff5e9] px-5 py-3 text-sm font-semibold text-[#8b4f10] transition hover:bg-[#ffefd9] md:text-base"
+              aria-label="Start voice symptom input"
+              className="group mt-3 flex w-full items-center justify-center gap-4 rounded-2xl border border-[#f4c489] bg-white px-4 py-4 transition hover:bg-[#fff8ef]"
             >
-              <Mic size={18} />
-              Speak Symptoms (माइक से बोलें)
+              <span className="relative inline-flex h-16 w-16 items-center justify-center">
+                <span className="absolute inset-0 rounded-full bg-[#ffd4a4] opacity-60 group-hover:animate-ping" />
+                <span className="relative inline-flex h-16 w-16 items-center justify-center rounded-full bg-[#ff9f3f] text-white shadow-sm">
+                  <Mic size={30} />
+                </span>
+              </span>
+              <span className="text-left">
+                <span className="block text-lg font-semibold text-[#7d4910]">Start Voice Check</span>
+                <span className="block text-sm text-[#94673a]">Mic se bolen | Hindi + English supported</span>
+              </span>
             </Link>
           </div>
 
