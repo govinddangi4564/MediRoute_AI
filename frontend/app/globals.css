@@ -4,9 +4,96 @@
 
 :root {
   color-scheme: light;
+  --lifeline-bg: #f4f8fc;
+  --lifeline-surface: #ffffff;
+  --lifeline-surface-soft: #eef5ff;
+  --lifeline-border: #d7e5f8;
+  --lifeline-text: #0f2038;
+  --lifeline-subtext: #516079;
+  --lifeline-primary: #0e67d8;
+  --lifeline-primary-deep: #0b4ea4;
+  --lifeline-emergency: #d93d3d;
 }
 
 body {
   @apply bg-background text-foreground antialiased;
-  font-family: "Segoe UI", "Noto Sans", "Noto Sans Devanagari", sans-serif;
+  font-family: "Trebuchet MS", "Noto Sans Devanagari", "Noto Sans", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at 15% 8%, #e5f0ff 0%, transparent 40%),
+    radial-gradient(circle at 90% 12%, #e9f7ff 0%, transparent 35%),
+    var(--lifeline-bg);
+  color: var(--lifeline-text);
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer components {
+  .ll-shell {
+    @apply rounded-[28px] border bg-white p-5 shadow-soft md:p-8;
+    border-color: var(--lifeline-border);
+    background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  }
+
+  .ll-eyebrow {
+    @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em];
+    color: #1252a1;
+    background: #e4efff;
+  }
+
+  .ll-title {
+    @apply mt-3 text-2xl font-semibold leading-tight md:text-4xl;
+    color: var(--lifeline-text);
+  }
+
+  .ll-subtitle {
+    @apply mt-2 text-sm leading-relaxed md:text-base;
+    color: var(--lifeline-subtext);
+  }
+
+  .ll-btn-primary {
+    @apply rounded-xl px-5 py-3 text-sm font-semibold text-white transition md:text-base;
+    background: linear-gradient(180deg, var(--lifeline-primary) 0%, var(--lifeline-primary-deep) 100%);
+  }
+
+  .ll-btn-primary:hover {
+    filter: brightness(1.03);
+  }
+
+  .ll-btn-secondary {
+    @apply rounded-xl border px-5 py-3 text-sm font-semibold transition md:text-base;
+    border-color: #bcd3f3;
+    color: #154f94;
+    background: #ffffff;
+  }
+
+  .ll-btn-secondary:hover {
+    background: #f2f7ff;
+  }
+
+  .ll-chip {
+    @apply rounded-full border px-3 py-1 text-xs font-semibold;
+    border-color: #d2e2f7;
+    color: #27456c;
+    background: #f3f8ff;
+  }
+
+  .ll-kpi-card {
+    @apply rounded-2xl border p-4;
+    border-color: #d7e5f8;
+    background: #ffffff;
+  }
+
+  .ll-danger-note {
+    @apply rounded-xl border px-4 py-3 text-sm font-medium;
+    border-color: #f0c6c6;
+    background: #fff4f4;
+    color: var(--lifeline-emergency);
+  }
 }

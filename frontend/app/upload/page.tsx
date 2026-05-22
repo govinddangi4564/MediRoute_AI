@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
+import { FileText, ImageIcon, UploadCloud } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { analyzeReports } from '@/lib/api';
 
@@ -20,11 +22,15 @@ export default function UploadPage() {
   const [dragActive, setDragActive] = useState(false);
   const router = useRouter();
 
-  const previews = useMemo(() => files.map((file) => ({
-    name: file.name,
-    type: file.type,
-    size: `${(file.size / 1024 / 1024).toFixed(2)} MB`
-  })), [files]);
+  const previews = useMemo(
+    () =>
+      files.map((file) => ({
+        name: file.name,
+        type: file.type,
+        size: `${(file.size / 1024 / 1024).toFixed(2)} MB`
+      })),
+    [files]
+  );
 
   const onFiles = (nextFiles: FileList | null) => {
     if (!nextFiles) return;
@@ -67,13 +73,22 @@ export default function UploadPage() {
 
   return (
     <main className="container py-6 md:py-10">
-      <div className="mx-auto max-w-3xl rounded-3xl border border-blue-100 bg-white p-5 shadow-soft md:p-8">
-        <h1 className="text-2xl font-semibold text-slate-900 md:text-3xl">Upload Medical Reports</h1>
-        <p className="mt-2 text-slate-600">Upload PDFs, prescriptions, blood reports, or scans.</p>
+      <motion.section
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="ll-shell mx-auto max-w-4xl"
+      >
+        <p className="ll-eyebrow">Step 2 of 3</p>
+        <h1 className="ll-title text-2xl md:text-3xl">Upload Medical Reports</h1>
+        <p className="ll-subtitle">
+          Drag and drop reports, scans, prescriptions, or blood test PDFs. We will explain them in simple language.
+        </p>
 
         <label
-          className={`mt-6 block cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition ${
-            dragActive ? 'border-primary bg-blue-100' : 'border-blue-200 bg-blue-50/40'
+          className={`mt-6 block rounded-2xl border-2 border-dashed p-8 text-center transition ${
+            dragActive
+              ? 'border-[#287be5] bg-[#eaf2ff]'
+              : 'border-[#cde0f7] bg-[linear-gradient(180deg,#f6faff_0%,#f0f7ff_100%)]'
           }`}
           onDragOver={(e) => {
             e.preventDefault();
@@ -82,34 +97,71 @@ export default function UploadPage() {
           onDragLeave={() => setDragActive(false)}
           onDrop={onDrop}
         >
-          <p className="font-medium text-blue-800">Tap to choose files</p>
-          <p className="mt-1 text-sm text-slate-500">Or drag and drop files here. PDF, JPG, PNG up to 6 files</p>
-          <input type="file" className="hidden" multiple accept=".pdf,image/*" onChange={(e) => onFiles(e.target.files)} />
+          <span className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#1a65cb] shadow-sm">
+            <UploadCloud size={22} />
+          </span>
+          <p className="mt-3 text-base font-semibold text-slate-900">Tap to choose or drag files here</p>
+          <p className="mt-1 text-sm text-slate-500">Accepted: PDF, JPG, PNG (up to 6 files)</p>
+          <input
+            type="file"
+            className="hidden"
+            multiple
+            accept=".pdf,image/*"
+            onChange={(e) => onFiles(e.target.files)}
+          />
         </label>
 
-        <div className="mt-5 space-y-2">
-          {previews.map((file) => (
-            <div key={file.name} className="rounded-lg border border-slate-200 p-3 text-sm">
-              <p className="font-medium text-slate-800">{file.name}</p>
-              <p className="text-slate-500">{file.type || 'Unknown'} | {file.size}</p>
-            </div>
-          ))}
+        <div className="mt-5 space-y-3">
+          {previews.map((file) => {
+            const isImage = file.type.startsWith('image/');
+            return (
+              <div key={file.name} className="flex items-start justify-between gap-3 rounded-xl border border-[#d8e7f9] bg-white p-3">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#edf4ff] text-[#215da8]">
+                    {isImage ? <ImageIcon size={16} /> : <FileText size={16} />}
+                  </span>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">{file.name}</p>
+                    <p className="text-xs text-slate-500">{file.type || 'Unknown format'}</p>
+                  </div>
+                </div>
+                <p className="text-xs font-semibold text-slate-600">{file.size}</p>
+              </div>
+            );
+          })}
         </div>
 
         {loading && (
-          <div className="mt-4">
-            <div className="h-2 overflow-hidden rounded-full bg-blue-100">
-              <div className="h-full bg-primary transition-all" style={{ width: `${progress}%` }} />
+          <div className="mt-5 rounded-xl border border-[#d8e7f9] bg-white p-3">
+            <div className="h-2 overflow-hidden rounded-full bg-[#e7f1ff]">
+              <div
+                className="h-full bg-[linear-gradient(90deg,#0f65d5_0%,#5aa2ff_100%)] transition-all"
+                style={{ width: `${progress}%` }}
+              />
             </div>
-            <p className="mt-1 text-xs text-slate-500">Uploading {progress}%</p>
+            <p className="mt-2 text-xs font-medium text-slate-600">Uploading and analyzing: {progress}%</p>
           </div>
         )}
 
-        <button onClick={submitReports} disabled={loading} className="mt-5 w-full rounded-xl bg-primary px-5 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-70">
-          {loading ? 'Analyzing Reports...' : 'Analyze Reports'}
-        </button>
-        {error && <p className="mt-3 text-sm text-danger">{error}</p>}
-      </div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <button
+            onClick={() => router.push('/symptoms')}
+            className="ll-btn-secondary"
+            type="button"
+          >
+            Back to Symptoms
+          </button>
+          <button
+            onClick={submitReports}
+            disabled={loading}
+            className="ll-btn-primary disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {loading ? 'Analyzing reports...' : 'Continue to AI Analysis'}
+          </button>
+        </div>
+
+        {error && <p className="mt-3 text-sm font-medium text-danger">{error}</p>}
+      </motion.section>
     </main>
   );
 }
