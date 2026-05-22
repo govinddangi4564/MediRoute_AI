@@ -17,7 +17,7 @@
 
 body {
   @apply bg-background text-foreground antialiased;
-  font-family: "Trebuchet MS", "Noto Sans Devanagari", "Noto Sans", "Segoe UI", sans-serif;
+  font-family: var(--font-inter), "Trebuchet MS", sans-serif;
   background:
     radial-gradient(circle at 15% 8%, #e5f0ff 0%, transparent 40%),
     radial-gradient(circle at 90% 12%, #e9f7ff 0%, transparent 35%),

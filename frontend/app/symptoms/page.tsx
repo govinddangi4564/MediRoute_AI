@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { Mic, MicOff, MessageSquareText, PhoneCall, Stethoscope } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -28,7 +28,7 @@ declare global {
   }
 }
 
-export default function SymptomPage() {
+function SymptomContent() {
   const [language, setLanguage] = useState<Lang>('mixed');
   const [symptoms, setSymptoms] = useState('');
   const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice');
@@ -104,141 +104,153 @@ export default function SymptomPage() {
   }, [searchParams, speechLang]);
 
   return (
-    <main className="container py-6 md:py-10">
-      <motion.section
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="ll-shell mx-auto max-w-4xl"
-      >
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="ll-eyebrow">Step 1 of 3</p>
-            <h1 className="ll-title text-2xl md:text-3xl">Describe Your Symptoms | अपनी तकलीफ बताइए</h1>
-            <p className="ll-subtitle">
-              You can speak or type. Simple words are enough. Hindi + English mixed language is supported.
-            </p>
-          </div>
-          <div className="rounded-xl border border-[#d6e5f8] bg-[#f4f9ff] px-3 py-2 text-sm font-medium text-[#275286]">
-            <span className="inline-flex items-center gap-2">
-              <Stethoscope size={16} />
-              Easy patient mode
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="ll-shell mx-auto max-w-4xl"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="ll-eyebrow">Step 1 of 3</p>
+          <h1 className="ll-title text-2xl md:text-3xl">Describe Your Symptoms | अपनी तकलीफ बताइए</h1>
+          <p className="ll-subtitle">
+            You can speak or type. Simple words are enough. Hindi + English mixed language is supported.
+          </p>
+        </div>
+        <div className="rounded-xl border border-[#d6e5f8] bg-[#f4f9ff] px-3 py-2 text-sm font-medium text-[#275286]">
+          <span className="inline-flex items-center gap-2">
+            <Stethoscope size={16} />
+            Easy patient mode
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-[#d8e7f9] bg-[#f5f9ff] p-4">
+        <p className="text-sm font-semibold text-slate-900">Easy steps | आसान स्टेप्स</p>
+        <p className="mt-2 text-sm text-slate-700">1. Choose language</p>
+        <p className="text-sm text-slate-700">2. Tap mic and speak (or type in box)</p>
+        <p className="text-sm text-slate-700">3. Tap Continue to AI Analysis</p>
+      </div>
+
+      <div className="mt-5 flex flex-wrap gap-2">
+        {languageOptions.map((option) => (
+          <button
+            key={option.value}
+            onClick={() => setLanguage(option.value)}
+            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+              language === option.value
+                ? 'bg-[#0f5fca] text-white'
+                : 'border border-[#d4e3f7] bg-[#f4f8ff] text-[#304f76] hover:bg-[#eaf2ff]'
+            }`}
+          >
+            {option.label} <span className="ml-1 opacity-80">({option.helper})</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <button
+          onClick={startListening}
+          disabled={listening}
+          className={`relative overflow-hidden rounded-2xl border px-4 py-4 text-left transition-all ${
+            listening
+              ? 'border-red-300 bg-red-50 ring-4 ring-red-500/20'
+              : inputMode === 'voice'
+                ? 'border-blue-300 bg-blue-50'
+                : 'border-[#cfe0f5] bg-white hover:border-blue-300 hover:bg-[#f4f8ff]'
+          }`}
+        >
+          {listening && (
+            <span className="absolute inset-0 rounded-2xl border-2 border-red-400 animate-pulse"></span>
+          )}
+          <div className="flex items-center gap-3 relative z-10">
+            <span className={`relative inline-flex h-12 w-12 items-center justify-center rounded-full ${listening ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+              {listening && <span className="absolute inset-0 rounded-full bg-red-400 opacity-40 animate-ping" />}
+              {listening ? <MicOff size={22} className="relative z-10" /> : <Mic size={22} className="relative z-10" />}
             </span>
+            <div>
+              <p className={`text-base font-bold ${listening ? 'text-red-700' : 'text-slate-900'}`}>
+                {listening ? 'Listening now...' : 'Speak with Microphone'}
+              </p>
+              <p className={`text-sm ${listening ? 'text-red-600/80' : 'text-slate-500'}`}>माइक दबाएं और बोलना शुरू करें</p>
+            </div>
           </div>
-        </div>
+        </button>
 
-        <div className="mt-4 rounded-2xl border border-[#d8e7f9] bg-[#f5f9ff] p-4">
-          <p className="text-sm font-semibold text-slate-900">Easy steps | आसान स्टेप्स</p>
-          <p className="mt-2 text-sm text-slate-700">1. Choose language</p>
-          <p className="text-sm text-slate-700">2. Tap mic and speak (or type in box)</p>
-          <p className="text-sm text-slate-700">3. Tap Continue to AI Analysis</p>
-        </div>
-
-        <div className="mt-5 flex flex-wrap gap-2">
-          {languageOptions.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => setLanguage(option.value)}
-              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                language === option.value
-                  ? 'bg-[#0f5fca] text-white'
-                  : 'border border-[#d4e3f7] bg-[#f4f8ff] text-[#304f76] hover:bg-[#eaf2ff]'
-              }`}
-            >
-              {option.label} <span className="ml-1 opacity-80">({option.helper})</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <button
-            onClick={startListening}
-            disabled={listening}
-            className={`rounded-2xl border px-4 py-4 text-left transition ${
-              listening
-                ? 'border-[#f1bbbb] bg-[#fff3f3]'
-                : inputMode === 'voice'
-                  ? 'border-[#8db7ec] bg-[#ebf3ff]'
-                  : 'border-[#cfe0f5] bg-white hover:bg-[#f4f8ff]'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <span className={`inline-flex h-10 w-10 items-center justify-center rounded-full ${listening ? 'bg-[#ffdede] text-[#be3333]' : 'bg-[#dceaff] text-[#1958aa]'}`}>
-                {listening ? <MicOff size={18} /> : <Mic size={18} />}
-              </span>
-              <div>
-                <p className="text-base font-semibold text-slate-900">
-                  {listening ? 'Listening now...' : 'Speak with Microphone'}
-                </p>
-                <p className="text-sm text-slate-600">माइक दबाएं और बोलना शुरू करें</p>
-              </div>
+        <button
+          onClick={() => {
+            setInputMode('text');
+            textAreaRef.current?.focus();
+          }}
+          className={`rounded-2xl border px-4 py-4 text-left transition-all ${
+            inputMode === 'text'
+              ? 'border-blue-300 bg-blue-50 ring-4 ring-blue-500/10'
+              : 'border-[#cfe0f5] bg-white hover:border-blue-300 hover:bg-[#f4f8ff]'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+              <MessageSquareText size={22} />
+            </span>
+            <div>
+              <p className="text-base font-bold text-slate-900">Type Symptoms</p>
+              <p className="text-sm text-slate-500">यहां अपनी तकलीफ लिखें</p>
             </div>
-          </button>
+          </div>
+        </button>
+      </div>
 
+      <textarea
+        ref={textAreaRef}
+        value={symptoms}
+        onChange={(e) => setSymptoms(e.target.value)}
+        className="mt-5 min-h-52 w-full rounded-2xl border border-[#d6e6f8] bg-white px-4 py-4 text-base leading-relaxed outline-none transition focus:border-[#8ab5ef] focus:ring-2 focus:ring-[#e8f2ff]"
+        placeholder="Example: Mujhe chest pain ho raha hai... / मुझे सीने में दर्द हो रहा है..."
+      />
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        {quickPrompts.map((prompt) => (
           <button
-            onClick={() => {
-              setInputMode('text');
-              textAreaRef.current?.focus();
-            }}
-            className={`rounded-2xl border px-4 py-4 text-left transition ${
-              inputMode === 'text'
-                ? 'border-[#8db7ec] bg-[#ebf3ff]'
-                : 'border-[#cfe0f5] bg-white hover:bg-[#f4f8ff]'
-            }`}
+            key={prompt}
+            onClick={() => setSymptoms((prev) => (prev ? `${prev}. ${prompt}` : prompt))}
+            className="ll-chip text-left"
           >
-            <div className="flex items-center gap-3">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#dceaff] text-[#1958aa]">
-                <MessageSquareText size={18} />
-              </span>
-              <div>
-                <p className="text-base font-semibold text-slate-900">Type Symptoms</p>
-                <p className="text-sm text-slate-600">यहां अपनी तकलीफ लिखें</p>
-              </div>
-            </div>
+            + {prompt}
           </button>
-        </div>
+        ))}
+      </div>
 
-        <textarea
-          ref={textAreaRef}
-          value={symptoms}
-          onChange={(e) => setSymptoms(e.target.value)}
-          className="mt-5 min-h-52 w-full rounded-2xl border border-[#d6e6f8] bg-white px-4 py-4 text-base leading-relaxed outline-none transition focus:border-[#8ab5ef] focus:ring-2 focus:ring-[#e8f2ff]"
-          placeholder="Example: Mujhe chest pain ho raha hai... / मुझे सीने में दर्द हो रहा है..."
-        />
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <a
+          href="tel:112"
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#f1c3c3] bg-[#fff4f4] px-4 py-3 font-semibold text-[#b53131]"
+        >
+          <PhoneCall size={18} />
+          Emergency Call 112
+        </a>
+        <button
+          onClick={submitSymptoms}
+          disabled={loading}
+          className="ll-btn-primary disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          {loading ? 'Analyzing symptoms...' : 'Continue to AI Analysis'}
+        </button>
+      </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {quickPrompts.map((prompt) => (
-            <button
-              key={prompt}
-              onClick={() => setSymptoms((prev) => (prev ? `${prev}. ${prompt}` : prompt))}
-              className="ll-chip text-left"
-            >
-              + {prompt}
-            </button>
-          ))}
-        </div>
+      <p className="mt-3 text-xs text-slate-500">
+        This tool supports guidance only. In severe emergency, call local emergency services immediately.
+      </p>
+      {error && <p className="mt-3 text-sm font-medium text-danger">{error}</p>}
+    </motion.section>
+  );
+}
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <a
-            href="tel:112"
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#f1c3c3] bg-[#fff4f4] px-4 py-3 font-semibold text-[#b53131]"
-          >
-            <PhoneCall size={18} />
-            Emergency Call 112
-          </a>
-          <button
-            onClick={submitSymptoms}
-            disabled={loading}
-            className="ll-btn-primary disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {loading ? 'Analyzing symptoms...' : 'Continue to AI Analysis'}
-          </button>
-        </div>
-
-        <p className="mt-3 text-xs text-slate-500">
-          This tool supports guidance only. In severe emergency, call local emergency services immediately.
-        </p>
-        {error && <p className="mt-3 text-sm font-medium text-danger">{error}</p>}
-      </motion.section>
+export default function SymptomPage() {
+  return (
+    <main className="container py-6 md:py-10">
+      <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading triage...</div>}>
+        <SymptomContent />
+      </Suspense>
     </main>
   );
 }
