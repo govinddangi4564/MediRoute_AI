@@ -1,0 +1,52 @@
+import { AnalysisResult, HospitalRecommendation } from '@/types';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:5000/api';
+
+async function apiRequest<T>(path: string, options: RequestInit): Promise<T> {
+  const res = await fetch(`${API_BASE_URL}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    },
+    cache: 'no-store'
+  });
+
+  if (!res.ok) {
+    throw new Error(`API request failed: ${res.status}`);
+  }
+
+  return res.json();
+}
+
+export async function analyzeSymptoms(payload: {
+  text: string;
+  language: 'en' | 'hi' | 'mixed';
+}): Promise<AnalysisResult> {
+  return apiRequest<AnalysisResult>('/analyze/symptoms', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function analyzeReports(payload: {
+  files: { name: string; type: string; base64: string }[];
+  symptomContext?: string;
+}): Promise<{ summary: string; redFlags: string[]; specialist: string }> {
+  return apiRequest('/analyze/reports', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function getHospitalRecommendations(payload: {
+  lat: number;
+  lng: number;
+  department: string;
+  severity: string;
+}): Promise<{ bestHospitalId: string; hospitals: HospitalRecommendation[] }> {
+  return apiRequest('/hospitals/recommend', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  });
+}
