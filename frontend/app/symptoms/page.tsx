@@ -1,22 +1,22 @@
 "use client";
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mic, MicOff, Stethoscope } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Mic, MicOff, MessageSquareText, PhoneCall, Stethoscope } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { analyzeSymptoms } from '@/lib/api';
 
 const languageOptions = [
-  { label: 'English', value: 'en', speech: 'en-IN' },
-  { label: 'Hindi', value: 'hi', speech: 'hi-IN' },
-  { label: 'Hindi + English', value: 'mixed', speech: 'hi-IN' }
+  { label: 'English', helper: 'English', value: 'en', speech: 'en-IN' },
+  { label: 'Hindi', helper: 'हिंदी', value: 'hi', speech: 'hi-IN' },
+  { label: 'Hindi + English', helper: 'हिंदी + English', value: 'mixed', speech: 'hi-IN' }
 ] as const;
 
 const quickPrompts = [
   'Mujhe chest pain ho raha hai',
   'Bukhar and weakness',
   'Breathing problem ho rahi hai',
-  'Dizziness since morning'
+  'Sir ghoom raha hai / Dizziness'
 ];
 
 type Lang = (typeof languageOptions)[number]['value'];
@@ -31,10 +31,14 @@ declare global {
 export default function SymptomPage() {
   const [language, setLanguage] = useState<Lang>('mixed');
   const [symptoms, setSymptoms] = useState('');
+  const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice');
   const [listening, setListening] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const autoVoiceStarted = useRef(false);
+  const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const speechLang = useMemo(
     () => languageOptions.find((l) => l.value === language)?.speech ?? 'hi-IN',
@@ -55,6 +59,7 @@ export default function SymptomPage() {
 
     recognition.onstart = () => {
       setListening(true);
+      setInputMode('voice');
       setError('');
     };
 
@@ -91,6 +96,13 @@ export default function SymptomPage() {
     }
   };
 
+  useEffect(() => {
+    if (searchParams.get('voice') === '1' && !autoVoiceStarted.current) {
+      autoVoiceStarted.current = true;
+      startListening();
+    }
+  }, [searchParams, speechLang]);
+
   return (
     <main className="container py-6 md:py-10">
       <motion.section
@@ -101,17 +113,24 @@ export default function SymptomPage() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="ll-eyebrow">Step 1 of 3</p>
-            <h1 className="ll-title text-2xl md:text-3xl">Describe Your Symptoms</h1>
+            <h1 className="ll-title text-2xl md:text-3xl">Describe Your Symptoms | अपनी तकलीफ बताइए</h1>
             <p className="ll-subtitle">
-              Write naturally as you speak. Simple words are enough. We support Hindi, English, and mixed language.
+              You can speak or type. Simple words are enough. Hindi + English mixed language is supported.
             </p>
           </div>
           <div className="rounded-xl border border-[#d6e5f8] bg-[#f4f9ff] px-3 py-2 text-sm font-medium text-[#275286]">
             <span className="inline-flex items-center gap-2">
               <Stethoscope size={16} />
-              Patient-friendly triage
+              Easy patient mode
             </span>
           </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-[#d8e7f9] bg-[#f5f9ff] p-4">
+          <p className="text-sm font-semibold text-slate-900">Easy steps | आसान स्टेप्स</p>
+          <p className="mt-2 text-sm text-slate-700">1. Choose language</p>
+          <p className="text-sm text-slate-700">2. Tap mic and speak (or type in box)</p>
+          <p className="text-sm text-slate-700">3. Tap Continue to AI Analysis</p>
         </div>
 
         <div className="mt-5 flex flex-wrap gap-2">
@@ -125,16 +144,65 @@ export default function SymptomPage() {
                   : 'border border-[#d4e3f7] bg-[#f4f8ff] text-[#304f76] hover:bg-[#eaf2ff]'
               }`}
             >
-              {option.label}
+              {option.label} <span className="ml-1 opacity-80">({option.helper})</span>
             </button>
           ))}
         </div>
 
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <button
+            onClick={startListening}
+            disabled={listening}
+            className={`rounded-2xl border px-4 py-4 text-left transition ${
+              listening
+                ? 'border-[#f1bbbb] bg-[#fff3f3]'
+                : inputMode === 'voice'
+                  ? 'border-[#8db7ec] bg-[#ebf3ff]'
+                  : 'border-[#cfe0f5] bg-white hover:bg-[#f4f8ff]'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span className={`inline-flex h-10 w-10 items-center justify-center rounded-full ${listening ? 'bg-[#ffdede] text-[#be3333]' : 'bg-[#dceaff] text-[#1958aa]'}`}>
+                {listening ? <MicOff size={18} /> : <Mic size={18} />}
+              </span>
+              <div>
+                <p className="text-base font-semibold text-slate-900">
+                  {listening ? 'Listening now...' : 'Speak with Microphone'}
+                </p>
+                <p className="text-sm text-slate-600">माइक दबाएं और बोलना शुरू करें</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => {
+              setInputMode('text');
+              textAreaRef.current?.focus();
+            }}
+            className={`rounded-2xl border px-4 py-4 text-left transition ${
+              inputMode === 'text'
+                ? 'border-[#8db7ec] bg-[#ebf3ff]'
+                : 'border-[#cfe0f5] bg-white hover:bg-[#f4f8ff]'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#dceaff] text-[#1958aa]">
+                <MessageSquareText size={18} />
+              </span>
+              <div>
+                <p className="text-base font-semibold text-slate-900">Type Symptoms</p>
+                <p className="text-sm text-slate-600">यहां अपनी तकलीफ लिखें</p>
+              </div>
+            </div>
+          </button>
+        </div>
+
         <textarea
+          ref={textAreaRef}
           value={symptoms}
           onChange={(e) => setSymptoms(e.target.value)}
           className="mt-5 min-h-52 w-full rounded-2xl border border-[#d6e6f8] bg-white px-4 py-4 text-base leading-relaxed outline-none transition focus:border-[#8ab5ef] focus:ring-2 focus:ring-[#e8f2ff]"
-          placeholder="Example: Mujhe chest pain ho raha hai and breathing problem ho rahi hai since 20 minutes..."
+          placeholder="Example: Mujhe chest pain ho raha hai... / मुझे सीने में दर्द हो रहा है..."
         />
 
         <div className="mt-4 flex flex-wrap gap-2">
@@ -150,19 +218,13 @@ export default function SymptomPage() {
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
-          <button
-            onClick={startListening}
-            disabled={listening}
-            className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 font-semibold transition ${
-              listening
-                ? 'border-[#f1bbbb] bg-[#fff3f3] text-[#be3333]'
-                : 'border-[#c9dcf5] bg-white text-[#1a4f92] hover:bg-[#f4f8ff]'
-            }`}
+          <a
+            href="tel:112"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#f1c3c3] bg-[#fff4f4] px-4 py-3 font-semibold text-[#b53131]"
           >
-            {listening ? <MicOff size={18} /> : <Mic size={18} />}
-            {listening ? 'Listening now...' : 'Speak with Microphone'}
-          </button>
-
+            <PhoneCall size={18} />
+            Emergency Call 112
+          </a>
           <button
             onClick={submitSymptoms}
             disabled={loading}

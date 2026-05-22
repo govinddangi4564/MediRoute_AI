@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { HeartPulse, Languages, MapPinned, ShieldCheck } from 'lucide-react';
+import { HeartPulse, Languages, MapPinned, Mic, ShieldCheck } from 'lucide-react';
 
 const trustPoints = [
   {
@@ -47,6 +47,13 @@ export default function LandingPage() {
             </Link>
             <Link href="/upload" className="ll-btn-secondary text-center">
               Upload Reports / Prescriptions
+            </Link>
+            <Link
+              href="/symptoms?voice=1"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#ffcf9d] bg-[#fff5e9] px-5 py-3 text-sm font-semibold text-[#8b4f10] transition hover:bg-[#ffefd9] md:text-base"
+            >
+              <Mic size={18} />
+              Speak Symptoms (माइक से बोलें)
             </Link>
           </div>
 
