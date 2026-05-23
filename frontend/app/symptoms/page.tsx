@@ -42,6 +42,7 @@ function SymptomsForm() {
   const voiceStarted = useRef(false);
   const recognitionRef = useRef<any>(null);
   const committedTextRef = useRef("");
+  const processedResultIndexRef = useRef(0);
   const stoppingRef = useRef(false);
 
   const startListening = () => {
@@ -67,12 +68,14 @@ function SymptomsForm() {
       setListening(true);
       setError("");
       committedTextRef.current = symptoms.trim();
+      processedResultIndexRef.current = 0;
     };
     recognition.onresult = (event: any) => {
       let finalText = "";
       let interimText = "";
+      const startIndex = Math.max(event.resultIndex, processedResultIndexRef.current);
       for (
-        let index = event.resultIndex;
+        let index = startIndex;
         index < event.results.length;
         index += 1
       ) {
@@ -80,6 +83,7 @@ function SymptomsForm() {
         if (!transcript) continue;
         if (event.results[index].isFinal) {
           finalText += ` ${transcript}`;
+          processedResultIndexRef.current = index + 1;
         } else {
           interimText += ` ${transcript}`;
         }

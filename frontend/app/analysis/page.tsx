@@ -73,6 +73,10 @@ function normalizeReportSummary(
   };
 }
 
+function localizeEmergencyNumber(value: string) {
+  return value.replace(/\b911\b/g, "112");
+}
+
 export default function AnalysisPage() {
   const { t } = useLang();
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
@@ -219,7 +223,7 @@ export default function AnalysisPage() {
                         <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[var(--line)] bg-[var(--cream)] text-xs font-semibold text-[var(--ink)]">
                           {index + 1}
                         </span>
-                        {item}
+                        {localizeEmergencyNumber(item)}
                       </li>
                     ))}
                   </ol>
@@ -243,7 +247,7 @@ export default function AnalysisPage() {
                         className="flex items-start gap-3 text-[13.5px] leading-6 text-[var(--muted)]"
                       >
                         <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[var(--accent)]" />
-                        <span>{item}</span>
+                        <span>{localizeEmergencyNumber(item)}</span>
                       </li>
                     ))}
                   </ul>
