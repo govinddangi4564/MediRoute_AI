@@ -389,10 +389,18 @@ a { color: inherit; text-decoration: none; }
   line-height: 1.75;
 }
 
-.symptoms-mic-button {
+.symptoms-voice-row {
   position: relative;
   width: 100%;
   margin-top: 26px;
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.symptoms-mic-button {
+  position: relative;
+  flex: 1 1 auto;
   padding: 24px;
   display: flex;
   align-items: center;
@@ -412,6 +420,11 @@ a { color: inherit; text-decoration: none; }
 .symptoms-mic-button.is-listening {
   border-color: rgba(184,75,67,0.38);
   background: linear-gradient(135deg, var(--red-light), rgba(247,237,221,0.82));
+  cursor: default;
+}
+
+.symptoms-mic-button:disabled:hover {
+  transform: none;
 }
 
 .symptoms-mic-icon {
@@ -447,6 +460,27 @@ a { color: inherit; text-decoration: none; }
   font-style: normal;
   font-weight: 800;
   letter-spacing: 0.08em;
+}
+
+.symptoms-stop-button {
+  min-width: 112px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(184,75,67,0.3);
+  background: var(--danger);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.16s ease, background-color 0.16s ease;
+}
+
+.symptoms-stop-button:hover {
+  transform: translateY(-1px);
+  background: #9f312b;
 }
 
 .symptoms-type-label {
@@ -846,9 +880,18 @@ a { color: inherit; text-decoration: none; }
     font-size: 27px;
   }
 
+  .symptoms-voice-row {
+    flex-direction: column;
+  }
+
   .symptoms-mic-button {
     align-items: flex-start;
     padding: 18px;
+  }
+
+  .symptoms-stop-button {
+    min-height: 48px;
+    width: 100%;
   }
 
   .symptoms-mic-icon {
