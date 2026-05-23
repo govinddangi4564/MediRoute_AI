@@ -58,6 +58,8 @@ export default function UploadPage() {
         setProgress(Math.round(((index + 1) / files.length) * 100));
       }
       const result = await analyzeReports({ files: payload });
+      localStorage.removeItem("lifelineAnalysis");
+      localStorage.removeItem("lifelineSymptoms");
       localStorage.setItem("lifelineReportAnalysis", JSON.stringify(result));
       router.push("/analysis");
     } catch {

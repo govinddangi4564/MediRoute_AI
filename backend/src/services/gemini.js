@@ -11,6 +11,7 @@ function fallbackAnalysis(text) {
   const criticalWords = ['chest pain', 'breath', 'unconscious', 'bleeding', 'stroke'];
   const highRisk = criticalWords.some((w) => lower.includes(w));
   return {
+    isFallback: true,
     severity: highRisk ? 'high' : 'moderate',
     emergencyLevel: highRisk ? 'Urgent' : 'Monitor Closely',
     possibleDisease: highRisk ? 'Cardio-respiratory emergency suspicion' : 'Viral or general systemic condition',
@@ -88,6 +89,7 @@ export async function analyzeReportsWithGemini(files) {
   const apiKey = getGeminiApiKey();
   if (!apiKey) {
     return {
+      isFallback: true,
       summary: 'Reports uploaded successfully. AI summary is available after Gemini key setup.',
       redFlags: ['Please verify abnormal values with your doctor.'],
       specialist: 'General Physician'
@@ -117,8 +119,8 @@ export async function analyzeReportsWithGemini(files) {
     const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     const parsed = safeJsonParse(rawText);
     if (parsed) return parsed;
-    if (rawText) return { summary: rawText, redFlags: [], specialist: 'General Physician' };
+    if (rawText) return { summary: rawText, redFlags: [], specialist: 'General Physician', isFallback: false };
   }
 
-  return { summary: 'Could not analyze report right now.', redFlags: [], specialist: 'General Physician' };
+  return { summary: 'Could not analyze report right now.', redFlags: [], specialist: 'General Physician', isFallback: true };
 }
