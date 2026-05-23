@@ -1,167 +1,148 @@
 "use client";
 
-import { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import { FileText, ImageIcon, UploadCloud } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { analyzeReports } from '@/lib/api';
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowRight, FileImage, FileText, UploadCloud, X } from "lucide-react";
+import { analyzeReports } from "@/lib/api";
 
 const toBase64 = (file: File) =>
   new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result).split(',')[1] ?? '');
+    reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
 
+function FileIcon({ type }: { type: string }) {
+  const Icon = type.startsWith("image/") ? FileImage : FileText;
+  return (
+    <span className="report-file-icon">
+      <Icon size={19} />
+    </span>
+  );
+}
+
 export default function UploadPage() {
   const [files, setFiles] = useState<File[]>([]);
+  const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [error, setError] = useState('');
-  const [dragActive, setDragActive] = useState(false);
+  const [error, setError] = useState("");
   const router = useRouter();
 
   const previews = useMemo(
-    () =>
-      files.map((file) => ({
-        name: file.name,
-        type: file.type,
-        size: `${(file.size / 1024 / 1024).toFixed(2)} MB`
-      })),
+    () => files.map((file) => ({ name: file.name, type: file.type, size: `${(file.size / 1024 / 1024).toFixed(1)} MB` })),
     [files]
   );
 
-  const onFiles = (nextFiles: FileList | null) => {
-    if (!nextFiles) return;
-    setFiles(Array.from(nextFiles).slice(0, 6));
+  const onFiles = (fileList: FileList | null) => {
+    if (!fileList) return;
+    setFiles(Array.from(fileList).slice(0, 6));
+    setError("");
   };
 
-  const onDrop = (e: any) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    onFiles(e.dataTransfer.files);
-  };
-
-  const submitReports = async () => {
+  const submit = async () => {
     if (!files.length) {
-      setError('Please upload at least one file.');
+      setError("Please upload at least one file.");
       return;
     }
 
     setLoading(true);
-    setError('');
+    setError("");
+    setProgress(0);
     try {
       const payload = [];
-      for (let i = 0; i < files.length; i += 1) {
-        const file = files[i];
-        const base64 = await toBase64(file);
-        payload.push({ name: file.name, type: file.type, base64 });
-        setProgress(Math.round(((i + 1) / files.length) * 100));
+      for (let index = 0; index < files.length; index += 1) {
+        const base64 = await toBase64(files[index]);
+        payload.push({ name: files[index].name, type: files[index].type, base64 });
+        setProgress(Math.round(((index + 1) / files.length) * 100));
       }
-
       const result = await analyzeReports({ files: payload });
-      localStorage.setItem('lifelineReportAnalysis', JSON.stringify(result));
-      router.push('/analysis');
+      localStorage.setItem("lifelineReportAnalysis", JSON.stringify(result));
+      router.push("/analysis");
     } catch {
-      setError('Report analysis failed. Please retry.');
+      setError("Report analysis failed. Please retry.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="container py-6 md:py-10">
-      <motion.section
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="ll-shell mx-auto max-w-4xl"
-      >
-        <p className="ll-eyebrow">Step 2 of 3</p>
-        <h1 className="ll-title text-2xl md:text-3xl">Upload Medical Reports</h1>
-        <p className="ll-subtitle">
-          Drag and drop reports, scans, prescriptions, or blood test PDFs. We will explain them in simple language.
-        </p>
-
-        <label
-          className={`mt-6 block rounded-2xl border-2 border-dashed p-8 text-center transition ${
-            dragActive
-              ? 'border-[#287be5] bg-[#eaf2ff]'
-              : 'border-[#cde0f7] bg-[linear-gradient(180deg,#f6faff_0%,#f0f7ff_100%)]'
-          }`}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragActive(true);
-          }}
-          onDragLeave={() => setDragActive(false)}
-          onDrop={onDrop}
-        >
-          <span className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#1a65cb] shadow-sm">
-            <UploadCloud size={22} />
-          </span>
-          <p className="mt-3 text-base font-semibold text-slate-900">Tap to choose or drag files here</p>
-          <p className="mt-1 text-sm text-slate-500">Accepted: PDF, JPG, PNG (up to 6 files)</p>
-          <input
-            type="file"
-            className="hidden"
-            multiple
-            accept=".pdf,image/*"
-            onChange={(e) => onFiles(e.target.files)}
-          />
-        </label>
-
-        <div className="mt-5 space-y-3">
-          {previews.map((file) => {
-            const isImage = file.type.startsWith('image/');
-            return (
-              <div key={file.name} className="flex items-start justify-between gap-3 rounded-xl border border-[#d8e7f9] bg-white p-3">
-                <div className="flex items-start gap-3">
-                  <span className="mt-0.5 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[#edf4ff] text-[#215da8]">
-                    {isImage ? <ImageIcon size={16} /> : <FileText size={16} />}
-                  </span>
-                  <div>
-                    <p className="text-sm font-semibold text-slate-800">{file.name}</p>
-                    <p className="text-xs text-slate-500">{file.type || 'Unknown format'}</p>
-                  </div>
-                </div>
-                <p className="text-xs font-semibold text-slate-600">{file.size}</p>
-              </div>
-            );
-          })}
-        </div>
-
-        {loading && (
-          <div className="mt-5 rounded-xl border border-[#d8e7f9] bg-white p-3">
-            <div className="h-2 overflow-hidden rounded-full bg-[#e7f1ff]">
-              <div
-                className="h-full bg-[linear-gradient(90deg,#0f65d5_0%,#5aa2ff_100%)] transition-all"
-                style={{ width: `${progress}%` }}
-              />
+    <section className="clinical-page reports-focus-page">
+      <div className="site-container">
+        <div className="reports-focus-shell">
+          <div className="reports-focus-card">
+            <div className="reports-focus-topline">
+              <span><FileText size={14} /> Medical reports</span>
+              <span>PDF, JPG, PNG</span>
             </div>
-            <p className="mt-2 text-xs font-medium text-slate-600">Uploading and analyzing: {progress}%</p>
+
+            <h1>Upload medical reports</h1>
+            <p className="reports-focus-copy">
+              Add a prescription, lab report, or scan image. We will summarize the important points in simple language.
+            </p>
+
+            <label
+              htmlFor="file-input"
+              onDragOver={(event) => {
+                event.preventDefault();
+                setDragActive(true);
+              }}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setDragActive(false);
+                onFiles(event.dataTransfer.files);
+              }}
+              className={`reports-dropzone ${dragActive ? "is-active" : ""}`}
+            >
+              <span className="reports-upload-icon">
+                <UploadCloud size={32} />
+              </span>
+              <strong>Choose files or drag them here</strong>
+              <small>Up to 6 files</small>
+              <input id="file-input" type="file" multiple accept=".pdf,image/*" className="hidden" onChange={(event) => onFiles(event.target.files)} />
+            </label>
+
+            {previews.length > 0 && (
+              <div className="reports-file-list">
+                {previews.map((file) => (
+                  <div key={file.name} className="reports-file-row">
+                    <FileIcon type={file.type} />
+                    <div>
+                      <p>{file.name}</p>
+                      <span>{file.size}</span>
+                    </div>
+                    <button
+                      onClick={() => setFiles((previous) => previous.filter((item) => item.name !== file.name))}
+                      aria-label={`Remove ${file.name}`}
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {loading && (
+              <div className="reports-progress">
+                <div>
+                  <span style={{ width: `${progress}%` }} />
+                </div>
+                <p>Analyzing documents... {progress}%</p>
+              </div>
+            )}
+
+            {error && <div className="alert alert-danger reports-error">{error}</div>}
+
+            <button onClick={submit} disabled={loading} className="btn btn-primary reports-submit" id="upload-submit">
+              {loading ? "Analyzing..." : "Analyze reports"}
+              {!loading && <ArrowRight size={16} />}
+            </button>
           </div>
-        )}
-
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <button
-            onClick={() => router.push('/symptoms')}
-            className="ll-btn-secondary"
-            type="button"
-          >
-            Back to Symptoms
-          </button>
-          <button
-            onClick={submitReports}
-            disabled={loading}
-            className="ll-btn-primary disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {loading ? 'Analyzing reports...' : 'Continue to AI Analysis'}
-          </button>
         </div>
-
-        {error && <p className="mt-3 text-sm font-medium text-danger">{error}</p>}
-      </motion.section>
-    </main>
+      </div>
+    </section>
   );
 }
