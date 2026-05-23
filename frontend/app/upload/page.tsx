@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, FileImage, FileText, UploadCloud, X } from "lucide-react";
 import { analyzeReports } from "@/lib/api";
+import { useLang } from "@/contexts/LanguageContext";
 
 const toBase64 = (file: File) =>
   new Promise<string>((resolve, reject) => {
@@ -23,6 +24,7 @@ function FileIcon({ type }: { type: string }) {
 }
 
 export default function UploadPage() {
+  const { lang, t } = useLang();
   const [files, setFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -43,7 +45,7 @@ export default function UploadPage() {
 
   const submit = async () => {
     if (!files.length) {
-      setError("Please upload at least one file.");
+      setError(t("upload.error.nofile"));
       return;
     }
 
@@ -57,13 +59,13 @@ export default function UploadPage() {
         payload.push({ name: files[index].name, type: files[index].type, base64 });
         setProgress(Math.round(((index + 1) / files.length) * 100));
       }
-      const result = await analyzeReports({ files: payload });
+      const result = await analyzeReports({ files: payload, language: lang });
       localStorage.removeItem("lifelineAnalysis");
       localStorage.removeItem("lifelineSymptoms");
       localStorage.setItem("lifelineReportAnalysis", JSON.stringify(result));
       router.push("/analysis");
     } catch {
-      setError("Report analysis failed. Please retry.");
+      setError(t("upload.error.fail"));
     } finally {
       setLoading(false);
     }
@@ -75,13 +77,13 @@ export default function UploadPage() {
         <div className="reports-focus-shell">
           <div className="reports-focus-card">
             <div className="reports-focus-topline">
-              <span><FileText size={14} /> Medical reports</span>
-              <span>PDF, JPG, PNG</span>
+              <span><FileText size={14} /> {t("upload.topline")}</span>
+              <span>{t("upload.types")}</span>
             </div>
 
-            <h1>Upload medical reports</h1>
+            <h1>{t("upload.title")}</h1>
             <p className="reports-focus-copy">
-              Add a prescription, lab report, or scan image. We will summarize the important points in simple language.
+              {t("upload.copy")}
             </p>
 
             <label
@@ -102,8 +104,8 @@ export default function UploadPage() {
               <span className="reports-upload-icon">
                 <UploadCloud size={32} />
               </span>
-              <strong>Choose files or drag them here</strong>
-              <small>Up to 6 files</small>
+              <strong>{t("upload.choose")}</strong>
+              <small>{t("upload.limit")}</small>
               <input id="file-input" type="file" multiple accept=".pdf,image/*" className="hidden" onChange={(event) => onFiles(event.target.files)} />
             </label>
 
@@ -132,14 +134,14 @@ export default function UploadPage() {
                 <div>
                   <span style={{ width: `${progress}%` }} />
                 </div>
-                <p>Analyzing documents... {progress}%</p>
+                <p>{t("upload.progress")} {progress}%</p>
               </div>
             )}
 
             {error && <div className="alert alert-danger reports-error">{error}</div>}
 
             <button onClick={submit} disabled={loading} className="btn btn-primary reports-submit" id="upload-submit">
-              {loading ? "Analyzing..." : "Analyze reports"}
+              {loading ? t("upload.analyzing") : t("upload.submit")}
               {!loading && <ArrowRight size={16} />}
             </button>
           </div>

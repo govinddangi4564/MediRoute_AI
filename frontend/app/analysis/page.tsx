@@ -13,31 +13,32 @@ import {
   Stethoscope,
 } from "lucide-react";
 import { AnalysisResult, Severity } from "@/types";
+import { useLang } from "@/contexts/LanguageContext";
 
 const SEVERITY_CONFIG: Record<
   Severity,
-  { label: string; tone: string; bg: string; border: string }
+  { labelKey: string; tone: string; bg: string; border: string }
 > = {
   low: {
-    label: "Low risk",
+    labelKey: "severity.low",
     tone: "#46745d",
     bg: "var(--green-light)",
     border: "#b8d4c0",
   },
   moderate: {
-    label: "Moderate risk",
+    labelKey: "severity.moderate",
     tone: "#9a7652",
     bg: "var(--yellow-light)",
     border: "#dec99e",
   },
   high: {
-    label: "High risk",
+    labelKey: "severity.high",
     tone: "var(--danger)",
     bg: "var(--red-light)",
     border: "#e7b8af",
   },
   critical: {
-    label: "Critical",
+    labelKey: "severity.critical",
     tone: "var(--danger)",
     bg: "var(--red-light)",
     border: "#e7b8af",
@@ -73,6 +74,7 @@ function normalizeReportSummary(
 }
 
 export default function AnalysisPage() {
+  const { t } = useLang();
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [reportSummary, setReportSummary] = useState<ReportSummary | null>(
     null,
@@ -105,14 +107,13 @@ export default function AnalysisPage() {
               size={30}
             />
             <h1 className="text-[24px] font-semibold text-[var(--ink)]">
-              No analysis yet
+              {t("analysis.empty.title")}
             </h1>
             <p className="mt-3 text-[14px] leading-6 text-[var(--muted)]">
-              Start with symptoms or upload a report so MediRoute can prepare a
-              care summary.
+              {t("analysis.empty.copy")}
             </p>
             <Link href="/symptoms" className="btn btn-primary mt-6">
-              Go to symptom intake
+              {t("analysis.empty.cta")}
             </Link>
           </div>
         </div>
@@ -126,14 +127,13 @@ export default function AnalysisPage() {
         <div className="clinical-header">
           <div>
             <span className="clinical-eyebrow">
-              <ClipboardCheck size={13} /> Care summary
+              <ClipboardCheck size={13} /> {t("analysis.topline")}
             </span>
             <h1 className="clinical-title">
-              Review the triage result before choosing care.
+              {t("analysis.title")}
             </h1>
             <p className="clinical-subtitle">
-              This is a structured guidance view. It should support a patient or
-              helper, not replace a clinician.
+              {t("analysis.copy")}
             </p>
           </div>
           <button
@@ -141,7 +141,7 @@ export default function AnalysisPage() {
             className="btn btn-primary"
             id="goto-hospitals-top"
           >
-            Find hospitals <ArrowRight size={16} />
+            {t("analysis.findHospitals")} <ArrowRight size={16} />
           </button>
         </div>
 
@@ -157,7 +157,7 @@ export default function AnalysisPage() {
                     backgroundColor: severity.bg,
                   }}
                 >
-                  <HeartPulse size={14} /> {severity.label}
+                  <HeartPulse size={14} /> {t(severity.labelKey)}
                 </span>
                 <h2 className="mt-4 text-[23px] font-semibold leading-tight text-[var(--ink)]">
                   {analysis.possibleDisease}
@@ -170,7 +170,7 @@ export default function AnalysisPage() {
               <div className="mt-5 grid grid-cols-1 gap-3">
                 <div className="flex items-center justify-between rounded-lg border border-[var(--line)] bg-[#f8f4eb] px-4 py-3">
                   <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                    Emergency level
+                    {t("analysis.emergency")}
                   </span>
                   <p className="text-right text-[14px] font-semibold text-[var(--ink)]">
                     {analysis.emergencyLevel}
@@ -178,7 +178,7 @@ export default function AnalysisPage() {
                 </div>
                 <div className="flex items-center justify-between rounded-lg border border-[var(--line)] bg-[#f8f4eb] px-4 py-3">
                   <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                    Department
+                    {t("analysis.department")}
                   </span>
                   <p className="text-right text-[14px] font-semibold text-[var(--ink)]">
                     {analysis.department}
@@ -186,7 +186,7 @@ export default function AnalysisPage() {
                 </div>
                 <div className="flex items-center justify-between rounded-lg border border-[var(--line)] bg-[#f8f4eb] px-4 py-3">
                   <span className="text-[12px] font-semibold uppercase tracking-[0.08em] text-[var(--muted)]">
-                    AI confidence
+                    {t("analysis.confidence")}
                   </span>
                   <p className="text-right text-[14px] font-semibold text-[var(--ink)]">{`${analysis.confidenceScore}%`}</p>
                 </div>
@@ -195,8 +195,7 @@ export default function AnalysisPage() {
               {isSevere && (
                 <div className="mt-5 rounded-lg border border-[#e7b8af] bg-[var(--red-light)] p-4 text-[13.5px] leading-6 text-[var(--danger)]">
                   <AlertTriangle className="mb-2" size={18} />
-                  High-risk symptoms should be evaluated urgently. Do not wait
-                  for additional AI guidance.
+                  {t("analysis.highRisk")}
                 </div>
               )}
             </aside>
@@ -206,7 +205,7 @@ export default function AnalysisPage() {
                 <div className="clinical-card-white">
                   <h2 className="flex items-center gap-2 text-[16px] font-semibold text-[var(--ink)]">
                     <Stethoscope size={18} className="text-[var(--accent)]" />{" "}
-                    First-aid steps
+                    {t("analysis.firstAid")}
                   </h2>
                   <ol className="mt-4 space-y-3">
                     {(Array.isArray(analysis.firstAid)
@@ -232,7 +231,7 @@ export default function AnalysisPage() {
                       size={18}
                       className="text-[var(--accent)]"
                     />{" "}
-                    What to do next
+                    {t("analysis.next")}
                   </h2>
                   <ul className="mt-4 space-y-3">
                     {(Array.isArray(analysis.recommendations)
@@ -257,14 +256,14 @@ export default function AnalysisPage() {
                   className="btn btn-primary"
                   id="goto-hospitals"
                 >
-                  <MapPin size={16} /> Find nearest hospital
+                  <MapPin size={16} /> {t("analysis.findNearest")}
                 </button>
                 <button
                   onClick={() => router.push("/dashboard")}
                   className="btn btn-outline"
                   id="goto-dashboard"
                 >
-                  Open live dashboard
+                  {t("analysis.dashboard")}
                 </button>
               </div>
             </div>
@@ -276,13 +275,13 @@ export default function AnalysisPage() {
             <div className="grid gap-5 lg:grid-cols-[0.35fr_1fr]">
               <div>
                 <span className="clinical-eyebrow">
-                  <FileText size={13} /> Report notes
+                  <FileText size={13} /> {t("analysis.report.notes")}
                 </span>
                 <h2 className="mt-3 text-[21px] font-semibold text-[var(--ink)]">
-                  Plain-language report summary
+                  {t("analysis.report.title")}
                 </h2>
                 <p className="mt-2 text-[13px] text-[var(--muted)]">
-                  Suggested specialist: {reportSummary.specialist}
+                  {t("analysis.report.specialist")} {reportSummary.specialist}
                 </p>
               </div>
               <div>
@@ -292,7 +291,7 @@ export default function AnalysisPage() {
                 {reportSummary.redFlags.length > 0 && (
                   <div className="mt-5 border border-[var(--line)] bg-[#f8f4eb] p-4">
                     <p className="mb-3 text-[13px] font-semibold text-[var(--ink)]">
-                      Points to note
+                      {t("analysis.report.points")}
                     </p>
                     <div className="clinical-list">
                       {reportSummary.redFlags.map((flag) => (

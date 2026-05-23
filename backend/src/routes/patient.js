@@ -6,7 +6,7 @@ import { recommendHospitals } from '../services/maps.js';
 const router = Router();
 
 router.post('/analyze/symptoms', async (req, res) => {
-  const schema = z.object({ text: z.string().min(4), language: z.enum(['en', 'hi', 'mixed']) });
+  const schema = z.object({ text: z.string().min(4), language: z.enum(['en', 'hi', 'bn', 'ta', 'te', 'mr', 'gu', 'kn', 'ml', 'pa']) });
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ message: 'Invalid symptom payload' });
 
@@ -21,13 +21,14 @@ router.post('/analyze/symptoms', async (req, res) => {
 router.post('/analyze/reports', async (req, res) => {
   const schema = z.object({
     files: z.array(z.object({ name: z.string(), type: z.string(), base64: z.string() })).min(1),
+    language: z.enum(['en', 'hi', 'bn', 'ta', 'te', 'mr', 'gu', 'kn', 'ml', 'pa']).optional(),
     symptomContext: z.string().optional()
   });
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ message: 'Invalid report payload' });
 
   try {
-    const result = await analyzeReportsWithGemini(parsed.data.files);
+    const result = await analyzeReportsWithGemini(parsed.data.files, parsed.data.language || 'en');
     return res.json(result);
   } catch {
     return res.status(500).json({ message: 'Report analysis failed' });

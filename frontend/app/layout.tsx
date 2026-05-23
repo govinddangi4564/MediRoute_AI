@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { PatientHeader } from "@/components/sections/patient-header";
+import { PatientFooter } from "@/components/sections/patient-footer";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 
 export const metadata: Metadata = {
@@ -23,12 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <LanguageProvider>
           <PatientHeader />
           {children}
-          <footer style={{ borderTop: "1px solid var(--line)", padding: "24px 0", background: "rgba(250,247,240,0.86)" }}>
-            <div className="site-container" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "14px", flexWrap: "wrap", fontSize: "13px", color: "var(--muted)" }}>
-              <span>MediRoute AI 2026</span>
-              <span>For guidance only - not a medical diagnosis</span>
-            </div>
-          </footer>
+          <PatientFooter />
         </LanguageProvider>
       </body>
     </html>

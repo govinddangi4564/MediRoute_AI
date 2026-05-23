@@ -1,13 +1,20 @@
+"use client";
+
+import { Globe2 } from "lucide-react";
+import { languages, useLang } from "@/contexts/LanguageContext";
+
 const nav = [
-  { href: "/", label: "Home" },
-  { href: "/symptoms", label: "Symptoms" },
-  { href: "/upload", label: "Reports" },
-  { href: "/analysis", label: "Analysis" },
-  { href: "/hospitals", label: "Hospitals" },
-  { href: "/dashboard", label: "Live" },
+  { href: "/", labelKey: "nav.home" },
+  { href: "/symptoms", labelKey: "nav.symptoms" },
+  { href: "/upload", labelKey: "nav.reports" },
+  { href: "/analysis", labelKey: "nav.analysis" },
+  { href: "/hospitals", labelKey: "nav.hospitals" },
+  { href: "/dashboard", labelKey: "nav.live" },
 ];
 
 export function PatientHeader() {
+  const { lang, setLang, t } = useLang();
+
   return (
     <header className="app-header">
       <div className="site-container app-header-inner">
@@ -19,14 +26,25 @@ export function PatientHeader() {
         <nav className="app-nav" aria-label="Primary navigation">
           {nav.map((item) => (
             <a key={item.href} href={item.href} className="app-nav-link">
-              {item.label}
+              {t(item.labelKey)}
             </a>
           ))}
         </nav>
 
         <div className="app-header-actions">
+          <label className="language-select" aria-label={t("common.language")}>
+            <Globe2 size={15} />
+            <select value={lang} onChange={(event) => setLang(event.target.value as typeof lang)}>
+              {languages.map((language) => (
+                <option key={language.code} value={language.code}>
+                  {language.nativeName}
+                </option>
+              ))}
+            </select>
+          </label>
+
           <a href="tel:112" className="btn btn-danger btn-sm">
-            112 Emergency
+            {t("common.emergency112")}
           </a>
 
           <details className="app-mobile-menu">
@@ -38,11 +56,11 @@ export function PatientHeader() {
             <div className="app-mobile-panel">
               {nav.map((item) => (
                 <a key={item.href} href={item.href}>
-                  {item.label}
+                  {t(item.labelKey)}
                 </a>
               ))}
               <a href="tel:112" className="app-mobile-emergency">
-                Emergency Call 112
+                {t("common.emergencyCall112")}
               </a>
             </div>
           </details>
