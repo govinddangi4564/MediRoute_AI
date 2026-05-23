@@ -58,6 +58,24 @@ function safeJsonParse(rawText) {
   }
 }
 
+function normalizeEmergencyNumber(value) {
+  if (typeof value === 'string') {
+    return value.replace(/\b911\b/g, '112');
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(normalizeEmergencyNumber);
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [key, normalizeEmergencyNumber(entry)])
+    );
+  }
+
+  return value;
+}
+
 async function callGeminiGenerate({ model, apiKey, body }) {
   const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
     method: 'POST',
@@ -76,7 +94,7 @@ export async function analyzeWithGemini(text, language) {
   const requestedModel = getGeminiModel();
   const modelCandidates = Array.from(new Set([requestedModel, 'gemini-1.5-flash', 'gemini-1.5-pro']));
   const outputLanguage = languageNames[language] || 'English';
-  const prompt = `You are a healthcare triage assistant. User language: ${outputLanguage}. Analyze the symptoms and return strict JSON keys: severity(low|moderate|high|critical), emergencyLevel, possibleDisease, confidenceScore(0-100), explanation(simple words), recommendations(array of short items), firstAid(array), department. Return all human-readable values in ${outputLanguage}. Keep severity as one of the required English enum values.`;
+  const prompt = `You are a healthcare triage assistant for users in India. User language: ${outputLanguage}. Analyze the symptoms and return strict JSON keys: severity(low|moderate|high|critical), emergencyLevel, possibleDisease, confidenceScore(0-100), explanation(simple words), recommendations(array of short items), firstAid(array), department. Use India's emergency number 112 whenever emergency calling is mentioned. Do not mention 911. Return all human-readable values in ${outputLanguage}. Keep severity as one of the required English enum values.`;
   const body = {
     contents: [{ parts: [{ text: `${prompt}\n\nSymptoms: ${text}` }] }],
     generationConfig: { response_mime_type: 'application/json' }
@@ -93,7 +111,7 @@ export async function analyzeWithGemini(text, language) {
     const data = await response.json();
     const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
     const parsed = safeJsonParse(rawText);
-    if (parsed) return parsed;
+    if (parsed) return normalizeEmergencyNumber(parsed);
   }
 
   return fallbackAnalysis(text);
