@@ -13,6 +13,17 @@ const SEVERITY_COLORS: Record<string, string> = {
   critical: "var(--danger)",
 };
 
+function parseSavedAnalysis() {
+  const value = localStorage.getItem("lifelineAnalysis");
+  if (!value) return null;
+  try {
+    return JSON.parse(value) as AnalysisResult;
+  } catch {
+    localStorage.removeItem("lifelineAnalysis");
+    return null;
+  }
+}
+
 export default function DashboardPage() {
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [hospitals, setHospitals] = useState<HospitalRecommendation[]>([]);
@@ -23,14 +34,13 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const raw = localStorage.getItem("lifelineAnalysis");
-    if (!raw) {
+    const parsed = parseSavedAnalysis();
+    if (!parsed) {
       setError("No active triage. Please analyze symptoms first.");
       setLoading(false);
       return;
     }
 
-    const parsed = JSON.parse(raw) as AnalysisResult;
     setAnalysis(parsed);
 
     const fetchLive = async (isRefresh = false) => {
@@ -65,7 +75,8 @@ export default function DashboardPage() {
           setError("Please allow location access.");
           setLoading(false);
           setRefreshing(false);
-        }
+        },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
       );
     };
 

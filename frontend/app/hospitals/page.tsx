@@ -20,45 +20,24 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
-type UserLocation = {
-  lat: number;
-  lng: number;
-};
-
-function getNavigationUrl(hospital: HospitalRecommendation, userLocation: UserLocation | null) {
-  const params = new URLSearchParams({
-    api: '1',
-    destination: `${hospital.lat},${hospital.lng}`,
-    travelmode: 'driving'
-  });
-
-  if (userLocation) {
-    params.set('origin', `${userLocation.lat},${userLocation.lng}`);
+function parseSavedJson<T>(key: string): T | null {
+  const value = localStorage.getItem(key);
+  if (!value) return null;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    localStorage.removeItem(key);
+    return null;
   }
-
-  return `https://www.google.com/maps/dir/?${params.toString()}`;
 }
 
-function getMapUrl(hospital: HospitalRecommendation | undefined, userLocation: UserLocation | null) {
-  if (!hospital) return '';
-
-  if (!userLocation) {
-    const params = new URLSearchParams({
-      q: `${hospital.lat},${hospital.lng}`,
-      z: '13',
-      output: 'embed'
-    });
-    return `https://www.google.com/maps?${params.toString()}`;
-  }
-
-  const params = new URLSearchParams({
-    output: 'embed',
-    saddr: `${userLocation.lat},${userLocation.lng}`,
-    daddr: `${hospital.lat},${hospital.lng}`,
-    dirflg: 'd'
-  });
-
-  return `https://www.google.com/maps?${params.toString()}`;
+function departmentFromSpecialist(specialist?: string) {
+  const normalized = (specialist || "").toLowerCase();
+  if (normalized.includes("cardio")) return "Cardiology";
+  if (normalized.includes("neuro")) return "Neurology";
+  if (normalized.includes("ortho")) return "Orthopedics";
+  if (normalized.includes("ent")) return "ENT";
+  return "General Medicine";
 }
 
 export default function HospitalsPage() {
@@ -68,14 +47,20 @@ export default function HospitalsPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const raw = localStorage.getItem("lifelineAnalysis");
-    if (!raw) {
-      setError("Please run symptom analysis first.");
+    const savedAnalysis = parseSavedJson<AnalysisResult>("lifelineAnalysis");
+    const savedReport = parseSavedJson<{ specialist?: string }>("lifelineReportAnalysis");
+    const routingContext: Pick<AnalysisResult, "department" | "severity"> | null = savedAnalysis
+      ? { department: savedAnalysis.department, severity: savedAnalysis.severity }
+      : savedReport
+        ? { department: departmentFromSpecialist(savedReport.specialist), severity: "moderate" }
+        : null;
+
+    if (!routingContext) {
+      setError("Please complete symptom or report analysis first.");
       setLoading(false);
       return;
     }
 
-    const analysis = JSON.parse(raw) as AnalysisResult;
     if (!navigator.geolocation) {
       setError("Location is not available in this browser.");
       setLoading(false);
@@ -88,8 +73,8 @@ export default function HospitalsPage() {
           const data = await getHospitalRecommendations({
             lat: coords.latitude,
             lng: coords.longitude,
-            department: analysis.department,
-            severity: analysis.severity,
+            department: routingContext.department,
+            severity: routingContext.severity,
           });
           setHospitals(data.hospitals);
           setBestId(data.bestHospitalId);
@@ -102,7 +87,8 @@ export default function HospitalsPage() {
       () => {
         setError("Please enable location access to find nearby hospitals.");
         setLoading(false);
-      }
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
     );
   }, []);
 
