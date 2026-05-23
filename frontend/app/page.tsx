@@ -16,39 +16,38 @@ import {
 import { useLang } from "@/contexts/LanguageContext";
 
 const clinicalSignals = [
-  "Symptom severity",
-  "Report context",
-  "Care department",
-  "Nearby hospitals",
+  "home.signal.severity",
+  "home.signal.report",
+  "home.signal.department",
+  "home.signal.hospitals",
 ];
 
 const capabilities = [
   {
     icon: Stethoscope,
-    title: "Triage that feels understandable",
-    desc: "Patients get a plain-language read on urgency, risk signs, and what to do before travelling.",
+    title: "home.capability.triage.title",
+    desc: "home.capability.triage.desc",
   },
   {
     icon: FileText,
-    title: "Reports without medical jargon",
-    desc: "Upload prescriptions or lab reports and surface the few points that matter for the next step.",
+    title: "home.capability.reports.title",
+    desc: "home.capability.reports.desc",
   },
   {
     icon: MapPin,
-    title: "Routing based on fit",
-    desc: "Hospitals are ranked by distance, department match, and emergency suitability.",
+    title: "home.capability.routing.title",
+    desc: "home.capability.routing.desc",
   },
 ];
 
 const workflow = [
-  "Describe symptoms in natural language",
-  "Review severity, first-aid notes, and report context",
-  "Pick the care option that is closest and suitable",
+  "home.workflow.1",
+  "home.workflow.2",
+  "home.workflow.3",
 ];
 
 export default function HomePage() {
-  const { lang } = useLang();
-  const hi = lang === "hi";
+  const { t } = useLang();
 
   return (
     <main className="bg-[var(--cream)] text-[var(--ink)]">
@@ -68,28 +67,24 @@ export default function HomePage() {
           <div className="max-w-[610px]">
             <div className="mb-4 inline-flex items-center gap-2 border border-white/22 bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.08em] text-[#f4eee5] backdrop-blur-sm">
               <ShieldCheck size={14} />
-              Healthcare navigation for patients
+              {t("home.badge")}
             </div>
 
             <h1 className="max-w-[590px] text-[34px] font-semibold leading-[1.12] text-[#fffaf1] sm:text-[46px]">
-              {hi
-                ? "Urgent care guidance, made easier for real patients"
-                : "Urgent care guidance, made easier for real patients"}
+              {t("home.title")}
             </h1>
 
             <p className="mt-5 max-w-[520px] text-[15.5px] leading-7 text-[#efe6d9]">
-              {hi
-                ? "MediRoute AI helps people understand symptoms, read basic reports, and find suitable nearby care without turning every health question into a maze."
-                : "MediRoute AI helps people understand symptoms, read basic reports, and find suitable nearby care without turning every health question into a maze."}
+              {t("home.subtitle")}
             </p>
 
             <div className="mt-7 flex flex-wrap items-center gap-3">
               <Link href="/symptoms" className="btn btn-primary" id="hero-cta-symptoms">
-                Check symptoms
+                {t("home.cta.symptoms")}
                 <ArrowRight size={16} />
               </Link>
               <Link href="/upload" className="btn btn-soft" id="hero-cta-upload">
-                Upload report
+                {t("home.cta.upload")}
               </Link>
             </div>
 
@@ -97,7 +92,7 @@ export default function HomePage() {
               {clinicalSignals.map((signal) => (
                 <span key={signal} className="flex items-center gap-2">
                   <CheckCircle2 size={14} className="text-[#b9d5ce]" />
-                  {signal}
+                  {t(signal)}
                 </span>
               ))}
             </div>
@@ -107,12 +102,12 @@ export default function HomePage() {
 
       <section className="border-b border-[var(--line)] bg-[var(--cream)] py-5">
         <div className="site-container flex flex-wrap items-center gap-x-9 gap-y-2 text-sm text-[var(--muted)]">
-          <span className="font-medium text-[var(--ink)]">Built for quick decisions</span>
-          <span>No signup required</span>
-          <span>Hindi + English input</span>
-          <span>Doctor-aware disclaimer</span>
+          <span className="font-medium text-[var(--ink)]">{t("home.strip.quick")}</span>
+          <span>{t("home.strip.signup")}</span>
+          <span>{t("home.strip.input")}</span>
+          <span>{t("home.strip.disclaimer")}</span>
           <a href="tel:112" className="ml-0 inline-flex items-center gap-2 font-medium text-[var(--danger)] md:ml-auto">
-            <PhoneCall size={15} /> Call 112
+            <PhoneCall size={15} /> {t("common.call112")}
           </a>
         </div>
       </section>
@@ -121,13 +116,13 @@ export default function HomePage() {
         <div className="site-container grid gap-9 lg:grid-cols-[0.74fr_1fr]">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--earth)]">
-              Product surface
+              {t("home.surface")}
             </p>
             <h2 className="mt-3 max-w-[410px] text-[27px] font-semibold leading-tight text-[var(--ink)]">
-              Calm interface for stressful moments.
+              {t("home.surface.title")}
             </h2>
             <p className="mt-4 max-w-[410px] text-[14px] leading-7 text-[var(--muted)]">
-              The landing experience borrows from the consultation photo: warm clinic light, soft whites, muted blue-green accents, and direct patient language.
+              {t("home.surface.copy")}
             </p>
           </div>
 
@@ -141,10 +136,10 @@ export default function HomePage() {
                 >
                   <Icon size={22} className="text-[var(--accent)]" />
                   <h3 className="mt-5 text-[16px] font-medium leading-snug text-[var(--ink)]">
-                    {item.title}
+                    {t(item.title)}
                   </h3>
                   <p className="mt-2 text-[13.5px] leading-6 text-[var(--muted)]">
-                    {item.desc}
+                    {t(item.desc)}
                   </p>
                 </article>
               );
@@ -158,49 +153,49 @@ export default function HomePage() {
           <div className="border border-[rgba(77,95,100,0.2)] bg-[rgba(255,255,255,0.55)] p-5 sm:p-6">
             <div className="flex items-start justify-between gap-5 border-b border-[var(--line)] pb-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--accent)]">Live triage</p>
-                <h2 className="mt-2 text-[23px] font-semibold text-[var(--ink)]">A realistic care summary, not a magic diagnosis.</h2>
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--accent)]">{t("home.live")}</p>
+                <h2 className="mt-2 text-[23px] font-semibold text-[var(--ink)]">{t("home.live.title")}</h2>
               </div>
               <ClipboardCheck className="mt-1 shrink-0 text-[var(--earth)]" size={25} />
             </div>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-3">
               <div className="border border-[var(--line)] bg-white px-4 py-3">
-                <p className="text-xs text-[var(--muted)]">Severity</p>
-                <p className="mt-1 text-sm font-medium text-[var(--ink)]">Moderate</p>
+                <p className="text-xs text-[var(--muted)]">{t("home.sample.severity")}</p>
+                <p className="mt-1 text-sm font-medium text-[var(--ink)]">{t("home.sample.severity.value")}</p>
               </div>
               <div className="border border-[var(--line)] bg-white px-4 py-3">
-                <p className="text-xs text-[var(--muted)]">Department</p>
-                <p className="mt-1 text-sm font-medium text-[var(--ink)]">General medicine</p>
+                <p className="text-xs text-[var(--muted)]">{t("home.sample.department")}</p>
+                <p className="mt-1 text-sm font-medium text-[var(--ink)]">{t("home.sample.department.value")}</p>
               </div>
               <div className="border border-[var(--line)] bg-white px-4 py-3">
-                <p className="text-xs text-[var(--muted)]">Route</p>
-                <p className="mt-1 text-sm font-medium text-[var(--ink)]">18 min away</p>
+                <p className="text-xs text-[var(--muted)]">{t("home.sample.route")}</p>
+                <p className="mt-1 text-sm font-medium text-[var(--ink)]">{t("home.sample.route.value")}</p>
               </div>
             </div>
 
             <ul className="mt-5 space-y-3 text-[14px] leading-6 text-[var(--muted)]">
               <li className="flex gap-3">
                 <span className="mt-2 h-1.5 w-1.5 bg-[var(--accent)]" />
-                Ask about duration, fever, breathing difficulty, and current medication.
+                {t("home.sample.ask")}
               </li>
               <li className="flex gap-3">
                 <span className="mt-2 h-1.5 w-1.5 bg-[var(--accent)]" />
-                Show emergency warning signs before hospital recommendations.
+                {t("home.sample.warning")}
               </li>
               <li className="flex gap-3">
                 <span className="mt-2 h-1.5 w-1.5 bg-[var(--accent)]" />
-                Keep every recommendation framed as guidance, not diagnosis.
+                {t("home.sample.guidance")}
               </li>
             </ul>
           </div>
 
           <div className="pt-1 lg:pt-5">
             <h2 className="max-w-[430px] text-[24px] font-semibold leading-tight text-[var(--ink)]">
-              Designed around the moment before care.
+              {t("home.workflow.title")}
             </h2>
             <p className="mt-4 max-w-[440px] text-[14px] leading-7 text-[var(--muted)]">
-              The workflow keeps a human consultation in mind: listen first, summarize clearly, then help the patient move to the right place.
+              {t("home.workflow.copy")}
             </p>
             <div className="mt-7 border-l border-[var(--line-strong)] pl-5">
               {workflow.map((step, index) => (
@@ -208,7 +203,7 @@ export default function HomePage() {
                   <span className="absolute -left-[31px] top-0 flex h-6 w-6 items-center justify-center border border-[var(--line-strong)] bg-[var(--cream)] text-xs font-medium text-[var(--ink)]">
                     {index + 1}
                   </span>
-                  <p className="text-[15px] font-medium text-[var(--ink)]">{step}</p>
+                  <p className="text-[15px] font-medium text-[var(--ink)]">{t(step)}</p>
                 </div>
               ))}
             </div>
@@ -219,9 +214,9 @@ export default function HomePage() {
       <section className="py-11">
         <div className="site-container grid items-center gap-7 lg:grid-cols-[0.72fr_1fr]">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--earth)]">Emergency guardrail</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--earth)]">{t("home.guardrail")}</p>
             <h2 className="mt-3 text-[24px] font-semibold text-[var(--ink)]">
-              Clear escalation when AI should step aside.
+              {t("home.guardrail.title")}
             </h2>
           </div>
 
@@ -230,15 +225,15 @@ export default function HomePage() {
               <HeartPulse className="mt-1 shrink-0 text-[var(--danger)]" size={24} />
               <div>
                 <p className="text-[16px] font-medium text-[var(--ink)]">
-                  For life-threatening symptoms, call 112 immediately.
+                  {t("home.guardrail.call")}
                 </p>
                 <p className="mt-1 max-w-[690px] text-[13.5px] leading-6 text-[var(--muted)]">
-                  Severe chest pain, breathing difficulty, loss of consciousness, stroke signs, or major injury should bypass AI guidance.
+                  {t("home.guardrail.copy")}
                 </p>
               </div>
             </div>
             <a href="tel:112" className="btn btn-danger justify-center" id="emergency-112-cta">
-              <PhoneCall size={16} /> Call 112
+              <PhoneCall size={16} /> {t("common.call112")}
             </a>
           </div>
         </div>

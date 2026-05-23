@@ -1,4 +1,5 @@
 import { AnalysisResult, HospitalRecommendationResponse } from '@/types';
+import type { Lang } from '@/contexts/LanguageContext';
 
 const rawApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:5000/api';
 const normalizedApiBaseUrl = rawApiBaseUrl.replace(/\/+$/, '');
@@ -25,7 +26,7 @@ async function apiRequest<T>(path: string, options: RequestInit): Promise<T> {
 
 export async function analyzeSymptoms(payload: {
   text: string;
-  language: 'en' | 'hi' | 'mixed';
+  language: Lang;
 }): Promise<AnalysisResult> {
   return apiRequest<AnalysisResult>('/analyze/symptoms', {
     method: 'POST',
@@ -35,6 +36,7 @@ export async function analyzeSymptoms(payload: {
 
 export async function analyzeReports(payload: {
   files: { name: string; type: string; base64: string }[];
+  language?: Lang;
   symptomContext?: string;
 }): Promise<{ summary: string; redFlags: string[]; specialist: string }> {
   return apiRequest('/analyze/reports', {
