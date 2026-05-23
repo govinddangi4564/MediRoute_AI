@@ -15,8 +15,6 @@ app.use(express.json({ limit: '15mb' }));
 app.get('/health', (_req, res) => res.json({ status: 'ok', service: 'lifeline-ai-backend' }));
 app.use('/api', patientRoutes);
 
-connectDb().finally(() => {
-  app.listen(port, () => {
-    console.log(`LifeLine AI backend running on port ${port}`);
-  });
-});
+connectDb()
+
+export default app;
