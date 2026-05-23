@@ -6,6 +6,19 @@ function getGeminiApiKey() {
   return process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
 }
 
+const languageNames = {
+  en: 'English',
+  hi: 'Hindi',
+  bn: 'Bengali',
+  ta: 'Tamil',
+  te: 'Telugu',
+  mr: 'Marathi',
+  gu: 'Gujarati',
+  kn: 'Kannada',
+  ml: 'Malayalam',
+  pa: 'Punjabi'
+};
+
 function fallbackAnalysis(text) {
   const lower = text.toLowerCase();
   const criticalWords = ['chest pain', 'breath', 'unconscious', 'bleeding', 'stroke'];
@@ -62,7 +75,8 @@ export async function analyzeWithGemini(text, language) {
 
   const requestedModel = getGeminiModel();
   const modelCandidates = Array.from(new Set([requestedModel, 'gemini-1.5-flash', 'gemini-1.5-pro']));
-  const prompt = `You are a healthcare triage assistant. User language: ${language}. Analyze the symptoms and return strict JSON keys: severity(low|moderate|high|critical), emergencyLevel, possibleDisease, confidenceScore(0-100), explanation(simple words), recommendations(array of short items), firstAid(array), department.`;
+  const outputLanguage = languageNames[language] || 'English';
+  const prompt = `You are a healthcare triage assistant. User language: ${outputLanguage}. Analyze the symptoms and return strict JSON keys: severity(low|moderate|high|critical), emergencyLevel, possibleDisease, confidenceScore(0-100), explanation(simple words), recommendations(array of short items), firstAid(array), department. Return all human-readable values in ${outputLanguage}. Keep severity as one of the required English enum values.`;
   const body = {
     contents: [{ parts: [{ text: `${prompt}\n\nSymptoms: ${text}` }] }],
     generationConfig: { response_mime_type: 'application/json' }
@@ -85,7 +99,7 @@ export async function analyzeWithGemini(text, language) {
   return fallbackAnalysis(text);
 }
 
-export async function analyzeReportsWithGemini(files) {
+export async function analyzeReportsWithGemini(files, language = 'en') {
   const apiKey = getGeminiApiKey();
   if (!apiKey) {
     return {
@@ -98,7 +112,8 @@ export async function analyzeReportsWithGemini(files) {
 
   const requestedModel = getGeminiModel();
   const modelCandidates = Array.from(new Set([requestedModel, 'gemini-1.5-flash', 'gemini-1.5-pro']));
-  const prompt = 'Summarize uploaded reports in simple language for normal patient. Return strict JSON with keys summary, redFlags(array), specialist.';
+  const outputLanguage = languageNames[language] || 'English';
+  const prompt = `Summarize uploaded reports in simple language for a normal patient. Return strict JSON with keys summary, redFlags(array), specialist. Return all human-readable values in ${outputLanguage}.`;
 
   const contents = [{ parts: [{ text: prompt }] }];
   for (const f of files) {

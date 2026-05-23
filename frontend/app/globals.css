@@ -137,6 +137,27 @@ a { color: inherit; text-decoration: none; }
   flex: 0 0 auto;
 }
 
+.language-select {
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  background: var(--warm-white);
+  color: var(--ink);
+  padding: 0 8px;
+}
+
+.language-select select {
+  max-width: 112px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
 .app-mobile-menu {
   display: none;
   position: relative;
@@ -851,6 +872,10 @@ a { color: inherit; text-decoration: none; }
 
   .app-header-actions > .btn {
     display: none;
+  }
+
+  .language-select select {
+    max-width: 88px;
   }
 
   .app-mobile-menu {

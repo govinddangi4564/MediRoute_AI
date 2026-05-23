@@ -18,7 +18,7 @@ const languageOptions = [
   {
     label: "Hindi + English",
     helper: "हिंदी + English",
-    value: "mixed",
+    value: "hi",
     speech: "hi-IN",
   },
 ] as const;
@@ -40,7 +40,7 @@ declare global {
 }
 
 export function SymptomForm() {
-  const [language, setLanguage] = useState<Lang>("mixed");
+  const [language, setLanguage] = useState<Lang>("hi");
   const [symptoms, setSymptoms] = useState("");
   const [inputMode, setInputMode] = useState<"voice" | "text">("voice");
   const [listening, setListening] = useState(false);
