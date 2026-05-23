@@ -31,6 +31,35 @@ declare global {
   }
 }
 
+function normalizeTranscript(value: string) {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+function appendTranscript(base: string, chunk: string) {
+  const cleanBase = normalizeTranscript(base);
+  const cleanChunk = normalizeTranscript(chunk);
+  if (!cleanChunk) return cleanBase;
+  if (!cleanBase) return cleanChunk;
+
+  const baseWords = cleanBase.split(" ");
+  const chunkWords = cleanChunk.split(" ");
+  const maxOverlap = Math.min(baseWords.length, chunkWords.length);
+
+  for (let size = maxOverlap; size > 0; size -= 1) {
+    const baseEnd = baseWords.slice(-size).join(" ").toLowerCase();
+    const chunkStart = chunkWords.slice(0, size).join(" ").toLowerCase();
+    if (baseEnd === chunkStart) {
+      return [...baseWords, ...chunkWords.slice(size)].join(" ");
+    }
+  }
+
+  if (cleanBase.toLowerCase().endsWith(cleanChunk.toLowerCase())) {
+    return cleanBase;
+  }
+
+  return `${cleanBase} ${cleanChunk}`;
+}
+
 function SymptomsForm() {
   const { lang, speechLocale, t } = useLang();
   const [symptoms, setSymptoms] = useState("");
@@ -71,7 +100,7 @@ function SymptomsForm() {
       processedResultIndexRef.current = 0;
     };
     recognition.onresult = (event: any) => {
-      let finalText = "";
+      const finalChunks: string[] = [];
       let interimText = "";
       const startIndex = Math.max(event.resultIndex, processedResultIndexRef.current);
       for (
@@ -82,19 +111,18 @@ function SymptomsForm() {
         const transcript = event.results[index][0].transcript.trim();
         if (!transcript) continue;
         if (event.results[index].isFinal) {
-          finalText += ` ${transcript}`;
+          finalChunks.push(transcript);
           processedResultIndexRef.current = index + 1;
         } else {
-          interimText += ` ${transcript}`;
+          interimText = transcript;
         }
       }
 
-      if (finalText.trim()) {
-        committedTextRef.current =
-          `${committedTextRef.current} ${finalText}`.trim();
+      for (const chunk of finalChunks) {
+        committedTextRef.current = appendTranscript(committedTextRef.current, chunk);
       }
 
-      setSymptoms(`${committedTextRef.current} ${interimText}`.trim());
+      setSymptoms(appendTranscript(committedTextRef.current, interimText));
     };
     recognition.onerror = (event: any) => {
       if (stoppingRef.current || event.error === "aborted") return;
