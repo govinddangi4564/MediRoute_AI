@@ -1,6 +1,10 @@
 import { AnalysisResult, HospitalRecommendationResponse } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:5000/api';
+const rawApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:5000/api';
+const normalizedApiBaseUrl = rawApiBaseUrl.replace(/\/+$/, '');
+const API_BASE_URL = normalizedApiBaseUrl.endsWith('/api')
+  ? normalizedApiBaseUrl
+  : `${normalizedApiBaseUrl}/api`;
 
 async function apiRequest<T>(path: string, options: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE_URL}${path}`, {
