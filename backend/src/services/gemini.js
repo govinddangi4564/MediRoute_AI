@@ -26,39 +26,66 @@ function fallbackAnalysis(text) {
   };
 }
 
+function safeJsonParse(rawText) {
+  if (!rawText) return null;
+  try {
+    return JSON.parse(rawText);
+  } catch {
+    const fenced = rawText
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/\s*```$/, '')
+      .trim();
+    try {
+      return JSON.parse(fenced);
+    } catch {
+      return null;
+    }
+  }
+}
+
+async function callGeminiGenerate({ model, apiKey, body }) {
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return response;
+}
+
 export async function analyzeWithGemini(text, language) {
   const apiKey = getGeminiApiKey();
-  const model = getGeminiModel();
   if (!apiKey) {
     return fallbackAnalysis(text);
   }
 
+  const requestedModel = getGeminiModel();
+  const modelCandidates = Array.from(new Set([requestedModel, 'gemini-1.5-flash', 'gemini-1.5-pro']));
   const prompt = `You are a healthcare triage assistant. User language: ${language}. Analyze the symptoms and return strict JSON keys: severity(low|moderate|high|critical), emergencyLevel, possibleDisease, confidenceScore(0-100), explanation(simple words), recommendations(array of short items), firstAid(array), department.`;
+  const body = {
+    contents: [{ parts: [{ text: `${prompt}\n\nSymptoms: ${text}` }] }],
+    generationConfig: { response_mime_type: 'application/json' }
+  };
 
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: `${prompt}\n\nSymptoms: ${text}` }] }],
-      generationConfig: { response_mime_type: 'application/json' }
-    })
-  });
-
-  if (!response.ok) return fallbackAnalysis(text);
-  const data = await response.json();
-  const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!rawText) return fallbackAnalysis(text);
-
-  try {
-    return JSON.parse(rawText);
-  } catch {
-    return fallbackAnalysis(text);
+  for (const model of modelCandidates) {
+    const response = await callGeminiGenerate({ model, apiKey, body });
+    if (!response.ok) {
+      if (response.status === 404 || response.status === 400) continue;
+      const raw = await response.text();
+      console.error(`[Gemini] symptom analysis failed for model=${model} status=${response.status} body=${raw}`);
+      continue;
+    }
+    const data = await response.json();
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const parsed = safeJsonParse(rawText);
+    if (parsed) return parsed;
   }
+
+  return fallbackAnalysis(text);
 }
 
 export async function analyzeReportsWithGemini(files) {
   const apiKey = getGeminiApiKey();
-  const model = getGeminiModel();
   if (!apiKey) {
     return {
       summary: 'Reports uploaded successfully. AI summary is available after Gemini key setup.',
@@ -67,6 +94,8 @@ export async function analyzeReportsWithGemini(files) {
     };
   }
 
+  const requestedModel = getGeminiModel();
+  const modelCandidates = Array.from(new Set([requestedModel, 'gemini-1.5-flash', 'gemini-1.5-pro']));
   const prompt = 'Summarize uploaded reports in simple language for normal patient. Return strict JSON with keys summary, redFlags(array), specialist.';
 
   const contents = [{ parts: [{ text: prompt }] }];
@@ -74,21 +103,22 @@ export async function analyzeReportsWithGemini(files) {
     contents[0].parts.push({ inline_data: { mime_type: f.type || 'application/pdf', data: f.base64 } });
   }
 
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents, generationConfig: { response_mime_type: 'application/json' } })
-  });
+  const body = { contents, generationConfig: { response_mime_type: 'application/json' } };
+  for (const model of modelCandidates) {
+    const response = await callGeminiGenerate({ model, apiKey, body });
+    if (!response.ok) {
+      if (response.status === 404 || response.status === 400) continue;
+      const raw = await response.text();
+      console.error(`[Gemini] report analysis failed for model=${model} status=${response.status} body=${raw}`);
+      continue;
+    }
 
-  if (!response.ok) {
-    return { summary: 'Could not analyze report right now.', redFlags: [], specialist: 'General Physician' };
+    const data = await response.json();
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    const parsed = safeJsonParse(rawText);
+    if (parsed) return parsed;
+    if (rawText) return { summary: rawText, redFlags: [], specialist: 'General Physician' };
   }
 
-  const data = await response.json();
-  const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  try {
-    return JSON.parse(rawText);
-  } catch {
-    return { summary: rawText || 'Could not analyze report.', redFlags: [], specialist: 'General Physician' };
-  }
+  return { summary: 'Could not analyze report right now.', redFlags: [], specialist: 'General Physician' };
 }
