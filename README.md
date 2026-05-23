@@ -28,6 +28,13 @@ Production-ready patient experience for AI-assisted emergency triage and hospita
 4. Run frontend:
    - `cd ../frontend && npm run dev`
 
+## Deployment
+
+- Backend: Render
+- Frontend: Vercel
+
+See `DEPLOYMENT.md` for the full setup, required environment variables, and deploy order.
+
 ## Core Patient Pages
 
 - `/` Landing
