@@ -34,6 +34,12 @@ app.get('/health', (_req, res) => res.json({ status: 'ok', service: 'lifeline-ai
 app.get('/api/health', (_req, res) => res.json({ status: 'ok', service: 'lifeline-ai-backend' }));
 app.use('/api', patientRoutes);
 
-connectDb()
+connectDb();
+
+if (!process.env.VERCEL) {
+  app.listen(port, () => {
+    console.log(`Backend running on http://localhost:${port}`);
+  });
+}
 
 export default app;

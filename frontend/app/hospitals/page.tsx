@@ -168,8 +168,8 @@ export default function HospitalsPage() {
                 </div>
               </div>
               <div className="flex flex-col gap-2 sm:min-w-[190px]">
-                {best.phone && (
-                  <a href={`tel:${best.phone}`} className="btn btn-outline justify-center" id="call-best">
+                {selectedHospital.phone && (
+                  <a href={`tel:${selectedHospital.phone}`} className="btn btn-outline justify-center" id="call-best">
                     <PhoneCall size={16} /> {t("hospitals.call")}
                   </a>
                 )}
