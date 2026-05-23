@@ -1,4 +1,4 @@
-import { AnalysisResult, HospitalRecommendation } from '@/types';
+import { AnalysisResult, HospitalRecommendationResponse } from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:5000/api';
 
@@ -44,7 +44,7 @@ export async function getHospitalRecommendations(payload: {
   lng: number;
   department: string;
   severity: string;
-}): Promise<{ bestHospitalId: string; hospitals: HospitalRecommendation[] }> {
+}): Promise<HospitalRecommendationResponse> {
   return apiRequest('/hospitals/recommend', {
     method: 'POST',
     body: JSON.stringify(payload)

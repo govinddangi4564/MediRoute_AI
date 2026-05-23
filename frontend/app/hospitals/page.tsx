@@ -20,6 +20,47 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
+type UserLocation = {
+  lat: number;
+  lng: number;
+};
+
+function getNavigationUrl(hospital: HospitalRecommendation, userLocation: UserLocation | null) {
+  const params = new URLSearchParams({
+    api: '1',
+    destination: `${hospital.lat},${hospital.lng}`,
+    travelmode: 'driving'
+  });
+
+  if (userLocation) {
+    params.set('origin', `${userLocation.lat},${userLocation.lng}`);
+  }
+
+  return `https://www.google.com/maps/dir/?${params.toString()}`;
+}
+
+function getMapUrl(hospital: HospitalRecommendation | undefined, userLocation: UserLocation | null) {
+  if (!hospital) return '';
+
+  if (!userLocation) {
+    const params = new URLSearchParams({
+      q: `${hospital.lat},${hospital.lng}`,
+      z: '13',
+      output: 'embed'
+    });
+    return `https://www.google.com/maps?${params.toString()}`;
+  }
+
+  const params = new URLSearchParams({
+    output: 'embed',
+    saddr: `${userLocation.lat},${userLocation.lng}`,
+    daddr: `${hospital.lat},${hospital.lng}`,
+    dirflg: 'd'
+  });
+
+  return `https://www.google.com/maps?${params.toString()}`;
+}
+
 export default function HospitalsPage() {
   const [loading, setLoading] = useState(true);
   const [hospitals, setHospitals] = useState<HospitalRecommendation[]>([]);
