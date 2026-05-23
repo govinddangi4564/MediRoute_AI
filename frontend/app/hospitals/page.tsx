@@ -42,11 +42,25 @@ function departmentFromSpecialist(specialist?: string) {
   return "General Medicine";
 }
 
+function googleMapsRouteUrl(hospital: HospitalRecommendation, origin?: { lat: number; lng: number } | null) {
+  const destination = `${hospital.lat},${hospital.lng}`;
+  const originQuery = origin ? `&origin=${origin.lat},${origin.lng}` : "";
+  return `https://www.google.com/maps/dir/?api=1${originQuery}&destination=${destination}&travelmode=driving`;
+}
+
+function googleMapsRouteEmbedUrl(hospital: HospitalRecommendation, origin?: { lat: number; lng: number } | null) {
+  const destination = `${hospital.lat},${hospital.lng}`;
+  if (!origin) return `https://maps.google.com/maps?q=${destination}&z=15&output=embed`;
+  return `https://maps.google.com/maps?saddr=${origin.lat},${origin.lng}&daddr=${destination}&dirflg=d&output=embed`;
+}
+
 export default function HospitalsPage() {
   const { t } = useLang();
   const [loading, setLoading] = useState(true);
   const [hospitals, setHospitals] = useState<HospitalRecommendation[]>([]);
   const [bestId, setBestId] = useState("");
+  const [selectedId, setSelectedId] = useState("");
+  const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -73,6 +87,7 @@ export default function HospitalsPage() {
     navigator.geolocation.getCurrentPosition(
       async ({ coords }) => {
         try {
+          setCurrentLocation({ lat: coords.latitude, lng: coords.longitude });
           const data = await getHospitalRecommendations({
             lat: coords.latitude,
             lng: coords.longitude,
@@ -81,6 +96,7 @@ export default function HospitalsPage() {
           });
           setHospitals(data.hospitals);
           setBestId(data.bestHospitalId);
+          setSelectedId(data.bestHospitalId || data.hospitals[0]?.id || "");
         } catch {
           setError(t("hospitals.error.fetch"));
         } finally {
@@ -96,7 +112,11 @@ export default function HospitalsPage() {
   }, []);
 
   const best = useMemo(() => hospitals.find((hospital) => hospital.id === bestId), [bestId, hospitals]);
-  const mapUrl = best ? `https://www.google.com/maps?q=${best.lat},${best.lng}&z=14&output=embed` : "";
+  const selectedHospital = useMemo(
+    () => hospitals.find((hospital) => hospital.id === selectedId) || best,
+    [best, hospitals, selectedId]
+  );
+  const mapUrl = selectedHospital ? googleMapsRouteEmbedUrl(selectedHospital, currentLocation) : "";
 
   if (loading) {
     return (
@@ -131,20 +151,20 @@ export default function HospitalsPage() {
           </a>
         </div>
 
-        {best && (
+        {selectedHospital && (
           <div className="clinical-card-white mb-5 border-[var(--accent-muted)]">
             <div className="grid gap-5 lg:grid-cols-[1fr_auto]">
               <div>
                 <span className="inline-flex items-center gap-2 border border-[#b8d4c0] bg-[var(--green-light)] px-3 py-1 text-[12px] font-semibold text-[#46745d]">
-                  <Star size={14} /> {t("hospitals.best")}
+                  <Star size={14} /> {selectedHospital.id === bestId ? "Best match" : "Selected hospital"}
                 </span>
-                <h2 className="mt-4 text-[22px] font-semibold text-[var(--ink)]">{best.name}</h2>
-                <p className="mt-1 max-w-[680px] text-[13.5px] text-[var(--muted)]">{best.address}</p>
+                <h2 className="mt-4 text-[22px] font-semibold text-[var(--ink)]">{selectedHospital.name}</h2>
+                <p className="mt-1 max-w-[680px] text-[13.5px] text-[var(--muted)]">{selectedHospital.address}</p>
                 <div className="mt-4 flex flex-wrap gap-3 text-[13px] text-[var(--muted)]">
-                  <span className="border border-[var(--line)] bg-[#f8f4eb] px-3 py-1"><Clock size={14} className="mr-1 inline" /> {best.etaMinutes} min</span>
-                  <span className="border border-[var(--line)] bg-[#f8f4eb] px-3 py-1"><MapPin size={14} className="mr-1 inline" /> {best.distanceKm} km</span>
-                  <span className="border border-[var(--line)] bg-[#f8f4eb] px-3 py-1"><Star size={14} className="mr-1 inline" /> {best.rating}</span>
-                  <span className="border border-[var(--line)] bg-[#f8f4eb] px-3 py-1">{best.specialization}</span>
+                  <span className="border border-[var(--line)] bg-[#f8f4eb] px-3 py-1"><Clock size={14} className="mr-1 inline" /> {selectedHospital.etaMinutes} min</span>
+                  <span className="border border-[var(--line)] bg-[#f8f4eb] px-3 py-1"><MapPin size={14} className="mr-1 inline" /> {selectedHospital.distanceKm} km</span>
+                  <span className="border border-[var(--line)] bg-[#f8f4eb] px-3 py-1"><Star size={14} className="mr-1 inline" /> {selectedHospital.rating}</span>
+                  <span className="border border-[var(--line)] bg-[#f8f4eb] px-3 py-1">{selectedHospital.specialization}</span>
                 </div>
               </div>
               <div className="flex flex-col gap-2 sm:min-w-[190px]">
@@ -154,11 +174,11 @@ export default function HospitalsPage() {
                   </a>
                 )}
                 <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${best.lat},${best.lng}`}
+                  href={googleMapsRouteUrl(selectedHospital, currentLocation)}
                   target="_blank"
                   rel="noreferrer"
                   className="btn btn-primary justify-center"
-                  id="nav-best"
+                  id="nav-selected"
                 >
                   {t("hospitals.navigate")} <ExternalLink size={15} />
                 </a>
@@ -171,11 +191,16 @@ export default function HospitalsPage() {
           <div className="space-y-3">
             {hospitals.map((hospital, index) => {
               const isBest = hospital.id === bestId;
+              const isSelected = hospital.id === selectedHospital?.id;
               return (
                 <article
                   key={hospital.id}
-                  className="border bg-[var(--warm-white)] p-4 transition hover:border-[var(--accent-muted)]"
-                  style={{ borderColor: isBest ? "var(--accent-muted)" : "var(--line)" }}
+                  onClick={() => setSelectedId(hospital.id)}
+                  className="cursor-pointer border bg-[var(--warm-white)] p-4 transition hover:border-[var(--accent-muted)]"
+                  style={{
+                    borderColor: isSelected ? "var(--accent)" : isBest ? "var(--accent-muted)" : "var(--line)",
+                    background: isSelected ? "var(--accent-light)" : "var(--warm-white)",
+                  }}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -191,14 +216,31 @@ export default function HospitalsPage() {
                     <span>{hospital.rating} {t("hospitals.rating")}</span>
                   </div>
                   <p className="mt-2 text-[12px] text-[var(--earth)]">{hospital.specialization}</p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(hospital.id)}
+                      className={`btn btn-sm ${isSelected ? "btn-primary" : "btn-outline"}`}
+                    >
+                      {isSelected ? "Selected" : "Select hospital"}
+                    </button>
+                    <a
+                      href={googleMapsRouteUrl(hospital, currentLocation)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-sm btn-outline"
+                    >
+                      Route <ExternalLink size={14} />
+                    </a>
+                  </div>
                 </article>
               );
             })}
           </div>
 
-          <div className="min-h-[430px] overflow-hidden border border-[var(--line)] bg-[#f4efe5]">
+          <div className="h-[320px] overflow-hidden border border-[var(--line)] bg-[#f4efe5] md:h-[360px] lg:sticky lg:top-[76px]">
             {mapUrl ? (
-              <iframe title="Hospital map" src={mapUrl} className="h-full min-h-[430px] w-full border-0" loading="lazy" />
+              <iframe key={mapUrl} title="Hospital route map" src={mapUrl} className="h-full w-full border-0" loading="lazy" />
             ) : (
               <div className="flex h-full min-h-[430px] items-center justify-center text-[14px] text-[var(--muted)]">{t("hospitals.mapUnavailable")}</div>
             )}
