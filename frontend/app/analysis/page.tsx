@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, ShieldCheck, Siren } from 'lucide-react';
+import { AlertTriangle, ShieldCheck, Siren, FileHeart, CircleAlert, Stethoscope, ArrowRight } from 'lucide-react';
 import { AnalysisResult } from '@/types';
 
 const severityUi = {
@@ -26,8 +26,29 @@ export default function AnalysisPage() {
   useEffect(() => {
     const saved = localStorage.getItem('lifelineAnalysis');
     const report = localStorage.getItem('lifelineReportAnalysis');
-    if (saved) setAnalysis(JSON.parse(saved));
-    if (report) setReportSummary(JSON.parse(report));
+    if (saved) {
+      try {
+        setAnalysis(JSON.parse(saved));
+      } catch {
+        localStorage.removeItem('lifelineAnalysis');
+      }
+    }
+    if (report) {
+      try {
+        const parsed = JSON.parse(report) as {
+          summary?: string;
+          redFlags?: string[];
+          specialist?: string;
+        };
+        setReportSummary({
+          summary: parsed.summary || 'Could not read report summary.',
+          redFlags: Array.isArray(parsed.redFlags) ? parsed.redFlags : [],
+          specialist: parsed.specialist || 'General Physician'
+        });
+      } catch {
+        localStorage.removeItem('lifelineReportAnalysis');
+      }
+    }
   }, []);
 
   const ui = useMemo(
@@ -125,6 +146,17 @@ export default function AnalysisPage() {
               >
                 Open Real-Time Dashboard
               </button>
+              <button
+                onClick={() => {
+                  localStorage.removeItem('lifelineAnalysis');
+                  localStorage.removeItem('lifelineReportAnalysis');
+                  localStorage.removeItem('lifelineSymptoms');
+                  router.push('/symptoms');
+                }}
+                className="ll-btn-secondary"
+              >
+                Start New Patient
+              </button>
             </div>
           </motion.section>
         )}
@@ -134,18 +166,81 @@ export default function AnalysisPage() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
-            className="ll-shell"
+            className="ll-shell overflow-hidden"
           >
-            <h2 className="text-xl font-semibold text-slate-900">Report Summary in Simple Language</h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-700">{reportSummary.summary}</p>
-            <p className="mt-4 rounded-lg bg-[#eef5ff] px-3 py-2 text-sm font-semibold text-[#204e8a]">
-              Suggested specialist: {reportSummary.specialist}
-            </p>
-            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-slate-700">
-              {reportSummary.redFlags.map((flag) => (
-                <li key={flag}>{flag}</li>
-              ))}
-            </ul>
+            <div className="rounded-2xl border border-[#d8e7f9] bg-[linear-gradient(135deg,#f8fbff_0%,#eef5ff_100%)] p-5 md:p-6">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold tracking-[0.08em] text-[#275286]">
+                    <FileHeart size={14} />
+                    REPORT INSIGHT
+                  </p>
+                  <h2 className="mt-3 text-2xl font-semibold text-slate-900">Your Report, Explained Simply</h2>
+                  <p className="mt-1 text-sm text-slate-600">Easy language summary from uploaded medical documents.</p>
+                </div>
+                <div className="rounded-xl border border-[#cfe2fb] bg-white px-4 py-2 text-sm font-semibold text-[#204e8a]">
+                  Confidence: AI-assisted
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-xl border border-[#d6e6f8] bg-white p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Summary</p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-700">{reportSummary.summary}</p>
+              </div>
+
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <div className="rounded-xl border border-[#d6e6f8] bg-white p-4">
+                  <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    <Stethoscope size={14} className="text-[#1e63c1]" />
+                    Suggested Specialist
+                  </p>
+                  <p className="mt-2 text-base font-semibold text-[#153d70]">{reportSummary.specialist}</p>
+                </div>
+
+                <div className="rounded-xl border border-[#d6e6f8] bg-white p-4">
+                  <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    <CircleAlert size={14} className="text-[#1e63c1]" />
+                    Attention Points
+                  </p>
+                  {reportSummary.redFlags.length ? (
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
+                      {reportSummary.redFlags.map((flag) => (
+                        <li key={flag}>{flag}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-2 text-sm text-slate-600">No major red flags detected from this report summary.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+                <button
+                  onClick={() => router.push('/hospitals')}
+                  className="ll-btn-primary inline-flex items-center justify-center gap-2"
+                >
+                  Find Relevant Hospital
+                  <ArrowRight size={16} />
+                </button>
+                <button
+                  onClick={() => router.push('/upload')}
+                  className="ll-btn-secondary"
+                >
+                  Upload Another Report
+                </button>
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('lifelineAnalysis');
+                    localStorage.removeItem('lifelineReportAnalysis');
+                    localStorage.removeItem('lifelineSymptoms');
+                    router.push('/symptoms');
+                  }}
+                  className="ll-btn-secondary"
+                >
+                  Start New Patient
+                </button>
+              </div>
+            </div>
           </motion.section>
         )}
       </div>

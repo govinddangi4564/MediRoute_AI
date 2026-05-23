@@ -62,6 +62,8 @@ export default function UploadPage() {
       }
 
       const result = await analyzeReports({ files: payload });
+      // Ensure the analysis page shows this report result, not stale symptom analysis.
+      localStorage.removeItem('lifelineAnalysis');
       localStorage.setItem('lifelineReportAnalysis', JSON.stringify(result));
       router.push('/analysis');
     } catch {

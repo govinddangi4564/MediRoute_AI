@@ -15,13 +15,52 @@ export default function HospitalsPage() {
   useEffect(() => {
     const run = async () => {
       const raw = localStorage.getItem('lifelineAnalysis');
-      if (!raw) {
-        setError('Please run symptom analysis first.');
+      const rawReport = localStorage.getItem('lifelineReportAnalysis');
+      let analysis: AnalysisResult | null = null;
+      if (raw) {
+        try {
+          analysis = JSON.parse(raw) as AnalysisResult;
+        } catch {
+          analysis = null;
+        }
+      }
+
+      // If user came from report-only flow, synthesize a safe routing context.
+      if (!analysis && rawReport) {
+        try {
+          const report = JSON.parse(rawReport) as { specialist?: string };
+          const specialist = (report.specialist || '').toLowerCase();
+          const department = specialist.includes('cardio')
+            ? 'Cardiology'
+            : specialist.includes('neuro')
+              ? 'Neurology'
+              : specialist.includes('ortho')
+                ? 'Orthopedics'
+                : specialist.includes('ent')
+                  ? 'ENT'
+                  : 'General Medicine';
+
+          analysis = {
+            severity: 'moderate',
+            emergencyLevel: 'Monitor Closely',
+            possibleDisease: 'Report-based recommendation',
+            confidenceScore: 60,
+            explanation: 'Generated from uploaded report context.',
+            recommendations: [],
+            firstAid: [],
+            department
+          };
+        } catch {
+          analysis = null;
+        }
+      }
+
+      if (!analysis) {
+        setError('Please complete symptom or report analysis first.');
         setLoading(false);
         return;
       }
 
-      const analysis = JSON.parse(raw) as AnalysisResult;
       if (!navigator.geolocation) {
         setError('Location access unavailable in this browser.');
         setLoading(false);
@@ -48,7 +87,8 @@ export default function HospitalsPage() {
         () => {
           setError('Please enable location to find nearby hospitals.');
           setLoading(false);
-        }
+        },
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
       );
     };
 
