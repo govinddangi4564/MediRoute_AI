@@ -24,3 +24,10 @@ export interface HospitalRecommendation {
   lat: number;
   lng: number;
 }
+
+export interface HospitalRecommendationResponse {
+  bestHospitalId: string;
+  hospitals: HospitalRecommendation[];
+  isFallback?: boolean;
+  source?: 'google' | 'osm' | 'cache' | 'fallback';
+}
