@@ -1,165 +1,180 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Phone, Route, Star } from 'lucide-react';
-import { getHospitalRecommendations } from '@/lib/api';
-import { AnalysisResult, HospitalRecommendation } from '@/types';
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { AlertTriangle, Building2, Clock, ExternalLink, LocateFixed, MapPin, PhoneCall, Star } from "lucide-react";
+import { getHospitalRecommendations } from "@/lib/api";
+import { AnalysisResult, HospitalRecommendation } from "@/types";
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <section className="clinical-page">
+      <div className="site-container">
+        <div className="clinical-card-white mx-auto max-w-[560px] text-center">
+          <AlertTriangle className="mx-auto mb-4 text-[var(--danger)]" size={30} />
+          <p className="text-[14px] leading-6 text-[var(--muted)]">{message}</p>
+          <Link href="/symptoms" className="btn btn-primary mt-6">Go to symptoms</Link>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 export default function HospitalsPage() {
   const [loading, setLoading] = useState(true);
   const [hospitals, setHospitals] = useState<HospitalRecommendation[]>([]);
-  const [bestId, setBestId] = useState('');
-  const [error, setError] = useState('');
+  const [bestId, setBestId] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const run = async () => {
-      const raw = localStorage.getItem('lifelineAnalysis');
-      if (!raw) {
-        setError('Please run symptom analysis first.');
-        setLoading(false);
-        return;
-      }
+    const raw = localStorage.getItem("lifelineAnalysis");
+    if (!raw) {
+      setError("Please run symptom analysis first.");
+      setLoading(false);
+      return;
+    }
 
-      const analysis = JSON.parse(raw) as AnalysisResult;
-      if (!navigator.geolocation) {
-        setError('Location access unavailable in this browser.');
-        setLoading(false);
-        return;
-      }
+    const analysis = JSON.parse(raw) as AnalysisResult;
+    if (!navigator.geolocation) {
+      setError("Location is not available in this browser.");
+      setLoading(false);
+      return;
+    }
 
-      navigator.geolocation.getCurrentPosition(
-        async ({ coords }) => {
-          try {
-            const data = await getHospitalRecommendations({
-              lat: coords.latitude,
-              lng: coords.longitude,
-              department: analysis.department,
-              severity: analysis.severity
-            });
-            setHospitals(data.hospitals);
-            setBestId(data.bestHospitalId);
-          } catch {
-            setError('Could not fetch hospital recommendations.');
-          } finally {
-            setLoading(false);
-          }
-        },
-        () => {
-          setError('Please enable location to find nearby hospitals.');
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        try {
+          const data = await getHospitalRecommendations({
+            lat: coords.latitude,
+            lng: coords.longitude,
+            department: analysis.department,
+            severity: analysis.severity,
+          });
+          setHospitals(data.hospitals);
+          setBestId(data.bestHospitalId);
+        } catch {
+          setError("Could not fetch hospital recommendations.");
+        } finally {
           setLoading(false);
         }
-      );
-    };
-
-    run();
+      },
+      () => {
+        setError("Please enable location access to find nearby hospitals.");
+        setLoading(false);
+      }
+    );
   }, []);
 
-  const bestHospital = useMemo(
-    () => hospitals.find((h) => h.id === bestId),
-    [bestId, hospitals]
-  );
-
-  const mapUrl = bestHospital
-    ? `https://www.google.com/maps?q=${bestHospital.lat},${bestHospital.lng}&z=13&output=embed`
-    : '';
+  const best = useMemo(() => hospitals.find((hospital) => hospital.id === bestId), [bestId, hospitals]);
+  const mapUrl = best ? `https://www.google.com/maps?q=${best.lat},${best.lng}&z=14&output=embed` : "";
 
   if (loading) {
-    return <main className="container py-10 text-center text-slate-600">Finding nearby hospitals...</main>;
+    return (
+      <section className="clinical-page">
+        <div className="site-container">
+          <div className="clinical-card-white mx-auto max-w-[520px] text-center text-[var(--muted)]">
+            <LocateFixed className="mx-auto mb-4 animate-pulse text-[var(--accent)]" size={28} />
+            Finding nearby hospitals based on your triage result...
+          </div>
+        </div>
+      </section>
+    );
   }
 
-  if (error) {
-    return <main className="container py-10 text-center text-danger">{error}</main>;
-  }
+  if (error) return <EmptyState message={error} />;
 
   return (
-    <main className="container py-6 md:py-10">
-      <div className="mb-4">
-        <p className="ll-eyebrow">Hospital Routing</p>
-        <h1 className="ll-title text-2xl md:text-3xl">Best Nearby Hospital Recommendation</h1>
-        <p className="ll-subtitle">Ranked by emergency fit, distance, and travel ETA.</p>
-      </div>
-
-      {bestHospital && (
-        <motion.section
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="ll-shell mb-5"
-        >
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#1f5eb1]">Top Match for You</p>
-          <h2 className="mt-2 text-xl font-semibold text-slate-900">{bestHospital.name}</h2>
-          <p className="mt-1 text-sm text-slate-600">{bestHospital.address}</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <span className="ll-chip">ETA {bestHospital.etaMinutes} min</span>
-            <span className="ll-chip">{bestHospital.distanceKm} km away</span>
-            <span className="ll-chip">Dept: {bestHospital.specialization}</span>
+    <section className="clinical-page">
+      <div className="site-container">
+        <div className="clinical-header">
+          <div>
+            <span className="clinical-eyebrow">
+              <Building2 size={13} /> Hospital routing
+            </span>
+            <h1 className="clinical-title">Choose nearby care that matches the situation.</h1>
+            <p className="clinical-subtitle">
+              Hospitals are ranked by travel time, distance, suitability, and department fit. Confirm availability by phone before travelling when possible.
+            </p>
           </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {bestHospital.phone ? (
-              <a href={`tel:${bestHospital.phone}`} className="ll-btn-secondary inline-flex items-center gap-2">
-                <Phone size={16} />
-                Call Hospital
-              </a>
-            ) : null}
-            <a
-              href={`https://www.google.com/maps/dir/?api=1&destination=${bestHospital.lat},${bestHospital.lng}`}
-              target="_blank"
-              rel="noreferrer"
-              className="ll-btn-primary inline-flex items-center gap-2"
-            >
-              <Route size={16} />
-              Start Navigation
-            </a>
+          <a href="tel:112" className="btn btn-danger">
+            <PhoneCall size={16} /> Call 112
+          </a>
+        </div>
+
+        {best && (
+          <div className="clinical-card-white mb-5 border-[var(--accent-muted)]">
+            <div className="grid gap-5 lg:grid-cols-[1fr_auto]">
+              <div>
+                <span className="inline-flex items-center gap-2 border border-[#b8d4c0] bg-[var(--green-light)] px-3 py-1 text-[12px] font-semibold text-[#46745d]">
+                  <Star size={14} /> Best match
+                </span>
+                <h2 className="mt-4 text-[22px] font-semibold text-[var(--ink)]">{best.name}</h2>
+                <p className="mt-1 max-w-[680px] text-[13.5px] text-[var(--muted)]">{best.address}</p>
+                <div className="mt-4 flex flex-wrap gap-3 text-[13px] text-[var(--muted)]">
+                  <span className="border border-[var(--line)] bg-[#f8f4eb] px-3 py-1"><Clock size={14} className="mr-1 inline" /> {best.etaMinutes} min</span>
+                  <span className="border border-[var(--line)] bg-[#f8f4eb] px-3 py-1"><MapPin size={14} className="mr-1 inline" /> {best.distanceKm} km</span>
+                  <span className="border border-[var(--line)] bg-[#f8f4eb] px-3 py-1"><Star size={14} className="mr-1 inline" /> {best.rating}</span>
+                  <span className="border border-[var(--line)] bg-[#f8f4eb] px-3 py-1">{best.specialization}</span>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 sm:min-w-[190px]">
+                {best.phone && (
+                  <a href={`tel:${best.phone}`} className="btn btn-outline justify-center" id="call-best">
+                    <PhoneCall size={16} /> Call hospital
+                  </a>
+                )}
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${best.lat},${best.lng}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-primary justify-center"
+                  id="nav-best"
+                >
+                  Navigate <ExternalLink size={15} />
+                </a>
+              </div>
+            </div>
           </div>
-        </motion.section>
-      )}
+        )}
 
-      <div className="grid gap-5 lg:grid-cols-5">
-        <section className="space-y-3 lg:col-span-2">
-          {hospitals.map((hospital, index) => {
-            const isBest = hospital.id === bestId;
-            return (
-              <motion.article
-                key={hospital.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.04 }}
-                className={`rounded-2xl border p-4 ${
-                  isBest
-                    ? 'border-[#81b1ea] bg-[#eaf3ff]'
-                    : 'border-[#d8e7f9] bg-white'
-                }`}
-              >
-                {isBest ? (
-                  <p className="mb-2 inline-flex rounded-full bg-[#0f62cd] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.11em] text-white">
-                    Best Match
-                  </p>
-                ) : null}
-                <h2 className="text-base font-semibold text-slate-900">{hospital.name}</h2>
-                <p className="mt-1 text-sm text-slate-600">{hospital.address}</p>
-                <p className="mt-2 flex items-center gap-1 text-sm text-slate-700">
-                  <Star size={13} className="text-amber-500" />
-                  {hospital.rating} | {hospital.distanceKm} km | ETA {hospital.etaMinutes} min
-                </p>
-                <p className="mt-1 text-xs font-medium text-slate-500">Specialization: {hospital.specialization}</p>
-              </motion.article>
-            );
-          })}
-        </section>
+        <div className="grid gap-5 lg:grid-cols-[390px_1fr]">
+          <div className="space-y-3">
+            {hospitals.map((hospital, index) => {
+              const isBest = hospital.id === bestId;
+              return (
+                <article
+                  key={hospital.id}
+                  className="border bg-[var(--warm-white)] p-4 transition hover:border-[var(--accent-muted)]"
+                  style={{ borderColor: isBest ? "var(--accent-muted)" : "var(--line)" }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      {isBest && <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--accent)]">Recommended</p>}
+                      <h3 className="text-[14.5px] font-semibold leading-snug text-[var(--ink)]">{hospital.name}</h3>
+                      <p className="mt-1 text-[12.5px] leading-5 text-[var(--muted)]">{hospital.address}</p>
+                    </div>
+                    <span className="text-[12px] font-semibold text-[var(--muted)]">#{index + 1}</span>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-[var(--muted)]">
+                    <span>{hospital.etaMinutes} min</span>
+                    <span>{hospital.distanceKm} km</span>
+                    <span>{hospital.rating} rating</span>
+                  </div>
+                  <p className="mt-2 text-[12px] text-[var(--earth)]">{hospital.specialization}</p>
+                </article>
+              );
+            })}
+          </div>
 
-        <section className="overflow-hidden rounded-2xl border border-[#d8e7f9] bg-white shadow-soft lg:col-span-3">
-          {mapUrl ? (
-            <iframe
-              title="Hospital map"
-              src={mapUrl}
-              className="h-[520px] w-full"
-              loading="lazy"
-            />
-          ) : (
-            <div className="p-6 text-slate-600">Map not available.</div>
-          )}
-        </section>
+          <div className="min-h-[430px] overflow-hidden border border-[var(--line)] bg-[#f4efe5]">
+            {mapUrl ? (
+              <iframe title="Hospital map" src={mapUrl} className="h-full min-h-[430px] w-full border-0" loading="lazy" />
+            ) : (
+              <div className="flex h-full min-h-[430px] items-center justify-center text-[14px] text-[var(--muted)]">Map unavailable</div>
+            )}
+          </div>
+        </div>
       </div>
-    </main>
+    </section>
   );
 }
